@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "SynthVoice.h"
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -10,12 +11,184 @@ PluginProcessor::PluginProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+       apvts (*this, nullptr, "Parameters", createParameterLayout())
 {
+    // Add voices to the synthesizer
+    for (int i = 0; i < NUM_VOICES; ++i)
+        synth.addVoice (new SynthVoice());
+
+    // Add sound - SynthSound allows all notes
+    synth.addSound (new SynthSound());
 }
 
 PluginProcessor::~PluginProcessor()
 {
+}
+
+//==============================================================================
+juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    // Filter Cutoff (20 Hz - 20 kHz, logarithmic scale)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_CUTOFF_ID, 1),
+        "Filter Cutoff",
+        juce::NormalisableRange<float> (20.0f, 20000.0f, 0.1f, 0.3f),  // skew for logarithmic feel
+        1000.0f,  // default value
+        "Hz"));
+
+    // Filter Resonance (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_RESONANCE_ID, 1),
+        "Filter Resonance",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.5f,  // default value
+        ""));
+
+    // Amp Envelope Attack (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (AMP_ATTACK_ID, 1),
+        "Amp Attack",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.01f,  // default 10ms
+        "s"));
+
+    // Amp Envelope Decay (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (AMP_DECAY_ID, 1),
+        "Amp Decay",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.1f,  // default 100ms
+        "s"));
+
+    // Amp Envelope Sustain (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (AMP_SUSTAIN_ID, 1),
+        "Amp Sustain",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.8f,  // default 80%
+        ""));
+
+    // Amp Envelope Release (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (AMP_RELEASE_ID, 1),
+        "Amp Release",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.1f,  // default 100ms
+        "s"));
+
+    // Sub-Oscillator Mix (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (SUB_MIX_ID, 1),
+        "Sub Mix",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.5f,  // default 50% mix
+        ""));
+
+    // Filter Envelope Attack (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_ENV_ATTACK_ID, 1),
+        "Filter Env Attack",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.01f,  // default 10ms
+        "s"));
+
+    // Filter Envelope Decay (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_ENV_DECAY_ID, 1),
+        "Filter Env Decay",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.2f,  // default 200ms
+        "s"));
+
+    // Filter Envelope Sustain (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_ENV_SUSTAIN_ID, 1),
+        "Filter Env Sustain",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.3f,  // default 30%
+        ""));
+
+    // Filter Envelope Release (1ms - 5s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_ENV_RELEASE_ID, 1),
+        "Filter Env Release",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.3f),
+        0.2f,  // default 200ms
+        "s"));
+
+    // Filter Envelope Amount (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_ENV_AMOUNT_ID, 1),
+        "Filter Env Amount",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.5f,  // default 50%
+        ""));
+
+    // LFO Rate (0.01 Hz - 20 Hz)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (LFO_RATE_ID, 1),
+        "LFO Rate",
+        juce::NormalisableRange<float> (0.01f, 20.0f, 0.01f, 0.3f),  // logarithmic
+        2.0f,  // default 2 Hz
+        "Hz"));
+
+    // LFO Amount (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (LFO_AMOUNT_ID, 1),
+        "LFO Amount",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.0f,  // default 0 (off)
+        ""));
+
+    // Drive Amount (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (DRIVE_AMOUNT_ID, 1),
+        "Drive",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.0f,  // default 0 (clean)
+        ""));
+
+    return layout;
+}
+
+void PluginProcessor::updateVoiceParameters()
+{
+    // Get current parameter values
+    float cutoff = apvts.getRawParameterValue (FILTER_CUTOFF_ID)->load();
+    float resonance = apvts.getRawParameterValue (FILTER_RESONANCE_ID)->load();
+    float attack = apvts.getRawParameterValue (AMP_ATTACK_ID)->load();
+    float decay = apvts.getRawParameterValue (AMP_DECAY_ID)->load();
+    float sustain = apvts.getRawParameterValue (AMP_SUSTAIN_ID)->load();
+    float release = apvts.getRawParameterValue (AMP_RELEASE_ID)->load();
+    float subMix = apvts.getRawParameterValue (SUB_MIX_ID)->load();
+    float filterEnvAttack = apvts.getRawParameterValue (FILTER_ENV_ATTACK_ID)->load();
+    float filterEnvDecay = apvts.getRawParameterValue (FILTER_ENV_DECAY_ID)->load();
+    float filterEnvSustain = apvts.getRawParameterValue (FILTER_ENV_SUSTAIN_ID)->load();
+    float filterEnvRelease = apvts.getRawParameterValue (FILTER_ENV_RELEASE_ID)->load();
+    float filterEnvAmount = apvts.getRawParameterValue (FILTER_ENV_AMOUNT_ID)->load();
+    float lfoRate = apvts.getRawParameterValue (LFO_RATE_ID)->load();
+    float lfoAmount = apvts.getRawParameterValue (LFO_AMOUNT_ID)->load();
+    float driveAmount = apvts.getRawParameterValue (DRIVE_AMOUNT_ID)->load();
+
+    // Update all voices
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+    {
+        if (auto* voice = dynamic_cast<SynthVoice*> (synth.getVoice (i)))
+        {
+            voice->setFilterCutoff (cutoff);
+            voice->setFilterResonance (resonance);
+            voice->setAmpEnvelope (attack, decay, sustain, release);
+            voice->setFilterEnvelope (filterEnvAttack, filterEnvDecay, filterEnvSustain, filterEnvRelease);
+            voice->setFilterEnvAmount (filterEnvAmount);
+            voice->setSubMix (subMix);
+            voice->setLFORate (lfoRate);
+            voice->setLFOAmount (lfoAmount);
+            voice->setDriveAmount (driveAmount);
+        }
+    }
 }
 
 //==============================================================================
@@ -86,9 +259,20 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 //==============================================================================
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    // Prepare the synthesizer
+    synth.setCurrentPlaybackSampleRate (sampleRate);
+
+    // Prepare all voices
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+    {
+        if (auto* voice = dynamic_cast<SynthVoice*> (synth.getVoice (i)))
+        {
+            voice->prepareToPlay (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+        }
+    }
+
+    // Initialize all voices with current parameter values
+    updateVoiceParameters();
 }
 
 void PluginProcessor::releaseResources()
@@ -122,33 +306,24 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
-    juce::ignoreUnused (midiMessages);
-
+    // Critical: Prevent denormal CPU spikes
     juce::ScopedNoDenormals noDenormals;
+
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    // Clear any output channels that don't have input
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
-    }
+    // Clear the buffer for synthesizer output (synth is additive)
+    buffer.clear();
+
+    // Update voice parameters (thread-safe via atomic loads)
+    updateVoiceParameters();
+
+    // Render synthesizer audio
+    synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
 //==============================================================================
@@ -165,17 +340,25 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 //==============================================================================
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused (destData);
+    // Use APVTS to save state as XML
+    auto state = apvts.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
 }
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused (data, sizeInBytes);
+    // Restore APVTS state from XML
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+
+    if (xmlState != nullptr)
+    {
+        if (xmlState->hasTagName (apvts.state.getType()))
+        {
+            apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
+            updateVoiceParameters();  // Update voices with restored parameters
+        }
+    }
 }
 
 //==============================================================================

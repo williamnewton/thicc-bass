@@ -6,6 +6,9 @@
 #include "ipps.h"
 #endif
 
+// Forward declaration
+class SynthVoice;
+
 class PluginProcessor : public juce::AudioProcessor
 {
 public:
@@ -38,6 +41,39 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    // Public access to APVTS for GUI
+    juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
+
+    // Parameter IDs
+    static constexpr const char* FILTER_CUTOFF_ID = "filterCutoff";
+    static constexpr const char* FILTER_RESONANCE_ID = "filterResonance";
+    static constexpr const char* AMP_ATTACK_ID = "ampAttack";
+    static constexpr const char* AMP_DECAY_ID = "ampDecay";
+    static constexpr const char* AMP_SUSTAIN_ID = "ampSustain";
+    static constexpr const char* AMP_RELEASE_ID = "ampRelease";
+    static constexpr const char* SUB_MIX_ID = "subMix";
+    static constexpr const char* FILTER_ENV_ATTACK_ID = "filterEnvAttack";
+    static constexpr const char* FILTER_ENV_DECAY_ID = "filterEnvDecay";
+    static constexpr const char* FILTER_ENV_SUSTAIN_ID = "filterEnvSustain";
+    static constexpr const char* FILTER_ENV_RELEASE_ID = "filterEnvRelease";
+    static constexpr const char* FILTER_ENV_AMOUNT_ID = "filterEnvAmount";
+    static constexpr const char* LFO_RATE_ID = "lfoRate";
+    static constexpr const char* LFO_AMOUNT_ID = "lfoAmount";
+    static constexpr const char* DRIVE_AMOUNT_ID = "driveAmount";
+
 private:
+    // Create APVTS parameter layout
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+    // Update all voices with current parameter values
+    void updateVoiceParameters();
+
+    // AudioProcessorValueTreeState for parameter management
+    juce::AudioProcessorValueTreeState apvts;
+
+    // Synthesizer
+    juce::Synthesiser synth;
+    static constexpr int NUM_VOICES = 8;  // Polyphony
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
