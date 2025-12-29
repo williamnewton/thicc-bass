@@ -20,6 +20,9 @@ PluginProcessor::PluginProcessor()
 
     // Add sound - SynthSound allows all notes
     synth.addSound (new SynthSound());
+
+    // Load first preset by default on fresh install
+    loadPreset(presetManager.getCurrentPreset());
 }
 
 PluginProcessor::~PluginProcessor()
@@ -345,6 +348,11 @@ void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
         }
     }
 
+    // Initialize waveform buffer for visualizer
+    waveformBuffer.setSize (1, waveformBufferSize);
+    waveformBuffer.clear();
+    waveformBufferPos.store (0);
+
     // Initialize all voices with current parameter values
     updateVoiceParameters();
 }
@@ -410,6 +418,43 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             channelData[sample] = std::tanh (channelData[sample] * 0.8f) * 1.2f;
         }
     }
+
+    // === Output Level Metering ===
+    // Calculate RMS level for output meter (thread-safe)
+    float rmsLevel = 0.0f;
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+        rmsLevel += buffer.getRMSLevel (channel, 0, buffer.getNumSamples());
+    }
+    if (totalNumOutputChannels > 0)
+        rmsLevel /= static_cast<float> (totalNumOutputChannels);
+
+    currentOutputLevel.store (rmsLevel);
+
+    // === Waveform Capture for Visualizer ===
+    // Capture mono mix of output for waveform display
+    if (totalNumOutputChannels > 0)
+    {
+        int pos = waveformBufferPos.load();
+        auto* waveformData = waveformBuffer.getWritePointer (0);
+
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            // Mix all channels to mono
+            float sample = 0.0f;
+            for (int ch = 0; ch < totalNumOutputChannels; ++ch)
+            {
+                sample += buffer.getSample (ch, i);
+            }
+            sample /= static_cast<float> (totalNumOutputChannels);
+
+            // Store in circular buffer
+            waveformData[pos] = sample;
+            pos = (pos + 1) % waveformBufferSize;
+        }
+
+        waveformBufferPos.store (pos);
+    }
 }
 
 //==============================================================================
@@ -444,6 +489,88 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
             apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
             updateVoiceParameters();  // Update voices with restored parameters
         }
+    }
+}
+
+//==============================================================================
+// Preset Management
+
+void PluginProcessor::loadPreset(const Preset& preset)
+{
+    // Load all parameters from preset
+    apvts.getParameter(SUB_MIX_ID)->setValueNotifyingHost(preset.subMix);
+    apvts.getParameter(SUB_OCTAVE_ID)->setValueNotifyingHost(preset.subOctave);
+
+    apvts.getParameter(FILTER_CUTOFF_ID)->setValueNotifyingHost(
+        apvts.getParameter(FILTER_CUTOFF_ID)->convertTo0to1(preset.filterCutoff));
+    apvts.getParameter(FILTER_RESONANCE_ID)->setValueNotifyingHost(preset.filterResonance);
+    apvts.getParameter(FILTER_KEY_TRACK_ID)->setValueNotifyingHost(preset.filterKeyTrack);
+
+    apvts.getParameter(FILTER_ENV_ATTACK_ID)->setValueNotifyingHost(
+        apvts.getParameter(FILTER_ENV_ATTACK_ID)->convertTo0to1(preset.filterEnvAttack));
+    apvts.getParameter(FILTER_ENV_DECAY_ID)->setValueNotifyingHost(
+        apvts.getParameter(FILTER_ENV_DECAY_ID)->convertTo0to1(preset.filterEnvDecay));
+    apvts.getParameter(FILTER_ENV_SUSTAIN_ID)->setValueNotifyingHost(preset.filterEnvSustain);
+    apvts.getParameter(FILTER_ENV_RELEASE_ID)->setValueNotifyingHost(
+        apvts.getParameter(FILTER_ENV_RELEASE_ID)->convertTo0to1(preset.filterEnvRelease));
+    apvts.getParameter(FILTER_ENV_AMOUNT_ID)->setValueNotifyingHost(preset.filterEnvAmount);
+
+    apvts.getParameter(AMP_ATTACK_ID)->setValueNotifyingHost(
+        apvts.getParameter(AMP_ATTACK_ID)->convertTo0to1(preset.ampAttack));
+    apvts.getParameter(AMP_DECAY_ID)->setValueNotifyingHost(
+        apvts.getParameter(AMP_DECAY_ID)->convertTo0to1(preset.ampDecay));
+    apvts.getParameter(AMP_SUSTAIN_ID)->setValueNotifyingHost(preset.ampSustain);
+    apvts.getParameter(AMP_RELEASE_ID)->setValueNotifyingHost(
+        apvts.getParameter(AMP_RELEASE_ID)->convertTo0to1(preset.ampRelease));
+
+    apvts.getParameter(LFO_RATE_ID)->setValueNotifyingHost(
+        apvts.getParameter(LFO_RATE_ID)->convertTo0to1(preset.lfoRate));
+    apvts.getParameter(LFO_AMOUNT_ID)->setValueNotifyingHost(preset.lfoAmount);
+
+    apvts.getParameter(VELOCITY_TO_FILTER_ID)->setValueNotifyingHost(preset.velocityToFilter);
+    apvts.getParameter(VELOCITY_TO_AMP_ID)->setValueNotifyingHost(preset.velocityToAmp);
+
+    apvts.getParameter(UNISON_VOICES_ID)->setValueNotifyingHost(
+        apvts.getParameter(UNISON_VOICES_ID)->convertTo0to1(preset.unisonVoices));
+    apvts.getParameter(UNISON_DETUNE_ID)->setValueNotifyingHost(preset.unisonDetune);
+
+    apvts.getParameter(DRIVE_AMOUNT_ID)->setValueNotifyingHost(preset.driveAmount);
+    apvts.getParameter(GLIDE_TIME_ID)->setValueNotifyingHost(
+        apvts.getParameter(GLIDE_TIME_ID)->convertTo0to1(preset.glideTime));
+
+    // Update voices with new parameters
+    updateVoiceParameters();
+}
+
+void PluginProcessor::nextPreset()
+{
+    presetManager.nextPreset();
+    loadPreset(presetManager.getCurrentPreset());
+}
+
+void PluginProcessor::previousPreset()
+{
+    presetManager.previousPreset();
+    loadPreset(presetManager.getCurrentPreset());
+}
+
+//==============================================================================
+// Waveform Visualizer Support
+
+void PluginProcessor::getWaveformSamples (float* destBuffer, int numSamples)
+{
+    if (numSamples > waveformBufferSize)
+        numSamples = waveformBufferSize;
+
+    int pos = waveformBufferPos.load();
+    auto* waveformData = waveformBuffer.getReadPointer (0);
+
+    // Copy samples from circular buffer in chronological order
+    for (int i = 0; i < numSamples; ++i)
+    {
+        // Read from oldest to newest
+        int readPos = (pos - numSamples + i + waveformBufferSize) % waveformBufferSize;
+        destBuffer[i] = waveformData[readPos];
     }
 }
 

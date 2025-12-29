@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "PresetManager.h"
 
 #if (MSVC)
 #include "ipps.h"
@@ -44,6 +45,20 @@ public:
     // Public access to APVTS for GUI
     juce::AudioProcessorValueTreeState& getAPVTS() { return apvts; }
 
+    // Output level metering
+    float getCurrentOutputLevel() const { return currentOutputLevel.load(); }
+
+    // Waveform capture for visualizer
+    void getWaveformSamples (float* destBuffer, int numSamples);
+    int getWaveformBufferSize() const { return waveformBufferSize; }
+
+    // Preset management
+    PresetManager& getPresetManager() { return presetManager; }
+    void loadPreset(const Preset& preset);
+    void nextPreset();
+    void previousPreset();
+    juce::String getCurrentPresetName() const { return presetManager.getCurrentPresetName(); }
+
     // Parameter IDs
     static constexpr const char* FILTER_CUTOFF_ID = "filterCutoff";
     static constexpr const char* FILTER_RESONANCE_ID = "filterResonance";
@@ -83,6 +98,17 @@ private:
     // Synthesizer
     juce::Synthesiser synth;
     static constexpr int NUM_VOICES = 8;  // Polyphony
+
+    // Output level metering (thread-safe)
+    std::atomic<float> currentOutputLevel { 0.0f };
+
+    // Waveform capture for visualizer
+    juce::AudioBuffer<float> waveformBuffer;
+    std::atomic<int> waveformBufferPos { 0 };
+    static constexpr int waveformBufferSize = 2048;
+
+    // Preset management
+    PresetManager presetManager;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
