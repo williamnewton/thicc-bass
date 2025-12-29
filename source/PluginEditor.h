@@ -90,6 +90,39 @@ private:
     juce::Label driveLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> driveAttachment;
 
+    // Phase 3: Glide/Portamento
+    juce::Slider glideSlider;
+    juce::Label glideLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> glideAttachment;
+
+    // Phase 3: Velocity Sensitivity
+    juce::Slider velToFilterSlider;
+    juce::Label velToFilterLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> velToFilterAttachment;
+
+    juce::Slider velToAmpSlider;
+    juce::Label velToAmpLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> velToAmpAttachment;
+
+    // Phase 3: Filter Key Tracking
+    juce::Slider filterKeyTrackSlider;
+    juce::Label filterKeyTrackLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> filterKeyTrackAttachment;
+
+    // Phase 3: Unison
+    juce::Slider unisonVoicesSlider;
+    juce::Label unisonVoicesLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> unisonVoicesAttachment;
+
+    juce::Slider thiccSlider;  // Unison detune amount
+    juce::Label thiccLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> thiccAttachment;
+
+    // Phase 3: Sub Octave Selector
+    juce::ComboBox subOctaveCombo;
+    juce::Label subOctaveLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> subOctaveAttachment;
+
     // Inspector for debugging
     std::unique_ptr<melatonin::Inspector> inspector;
     juce::TextButton inspectButton { "Inspect" };

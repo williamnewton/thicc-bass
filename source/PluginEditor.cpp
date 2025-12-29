@@ -112,6 +112,60 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     driveAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
         processorRef.getAPVTS(), PluginProcessor::DRIVE_AMOUNT_ID, driveSlider);
 
+    // === PHASE 3: GLIDE ===
+    setupRotarySlider (glideSlider, glideLabel, "GLIDE");
+    addAndMakeVisible (glideSlider);
+    addAndMakeVisible (glideLabel);
+    glideAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::GLIDE_TIME_ID, glideSlider);
+
+    // === PHASE 3: VELOCITY SENSITIVITY ===
+    setupRotarySlider (velToFilterSlider, velToFilterLabel, "VEL→FILT");
+    addAndMakeVisible (velToFilterSlider);
+    addAndMakeVisible (velToFilterLabel);
+    velToFilterAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::VELOCITY_TO_FILTER_ID, velToFilterSlider);
+
+    setupRotarySlider (velToAmpSlider, velToAmpLabel, "VEL→AMP");
+    addAndMakeVisible (velToAmpSlider);
+    addAndMakeVisible (velToAmpLabel);
+    velToAmpAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::VELOCITY_TO_AMP_ID, velToAmpSlider);
+
+    // === PHASE 3: FILTER KEY TRACKING ===
+    setupRotarySlider (filterKeyTrackSlider, filterKeyTrackLabel, "KEY TRACK");
+    addAndMakeVisible (filterKeyTrackSlider);
+    addAndMakeVisible (filterKeyTrackLabel);
+    filterKeyTrackAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::FILTER_KEY_TRACK_ID, filterKeyTrackSlider);
+
+    // === PHASE 3: UNISON ===
+    setupRotarySlider (unisonVoicesSlider, unisonVoicesLabel, "VOICES");
+    unisonVoicesSlider.setTextValueSuffix ("");
+    addAndMakeVisible (unisonVoicesSlider);
+    addAndMakeVisible (unisonVoicesLabel);
+    unisonVoicesAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::UNISON_VOICES_ID, unisonVoicesSlider);
+
+    setupRotarySlider (thiccSlider, thiccLabel, "THICC");
+    addAndMakeVisible (thiccSlider);
+    addAndMakeVisible (thiccLabel);
+    thiccAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::UNISON_DETUNE_ID, thiccSlider);
+
+    // === PHASE 3: SUB OCTAVE SELECTOR ===
+    subOctaveLabel.setText ("SUB OCT", juce::dontSendNotification);
+    subOctaveLabel.setJustificationType (juce::Justification::centred);
+    subOctaveLabel.setFont (juce::Font (11.0f));
+    addAndMakeVisible (subOctaveLabel);
+
+    subOctaveCombo.addItem ("-1 Oct", 1);
+    subOctaveCombo.addItem ("-2 Oct", 2);
+    subOctaveCombo.setSelectedId (1);
+    addAndMakeVisible (subOctaveCombo);
+    subOctaveAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+        processorRef.getAPVTS(), PluginProcessor::SUB_OCTAVE_ID, subOctaveCombo);
+
     // Inspector button
     addAndMakeVisible (inspectButton);
     inspectButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2a2a));
@@ -127,7 +181,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
         inspector->setVisible (true);
     };
 
-    setSize (1000, 500);
+    setSize (1200, 600);  // Phase 3: Increased for new controls
 }
 
 PluginEditor::~PluginEditor()
@@ -164,50 +218,59 @@ void PluginEditor::paint (juce::Graphics& g)
 
     // Section background panels
     auto row1Y = 50;
-    auto row2Y = 280;
+    auto row2Y = 240;
+    auto row3Y = 430;
 
-    // Oscillator panel
-    juce::Rectangle<int> oscPanel (5, row1Y + 25, 180, 215);
+    // ROW 1 PANELS
+    juce::Rectangle<int> oscPanel (5, row1Y + 25, 235, 155);
     drawSectionPanel (g, oscPanel);
 
-    // Filter panel
-    juce::Rectangle<int> filterPanel (197, row1Y + 25, 180, 215);
+    juce::Rectangle<int> filterPanel (250, row1Y + 25, 235, 155);
     drawSectionPanel (g, filterPanel);
 
-    // Filter Envelope panel
-    juce::Rectangle<int> filterEnvPanel (397, row1Y + 25, 390, 215);
+    juce::Rectangle<int> filterEnvPanel (495, row1Y + 25, 390, 155);
     drawSectionPanel (g, filterEnvPanel);
 
-    // Amp Envelope panel
-    juce::Rectangle<int> ampPanel (807, row1Y + 25, 180, 215);
+    juce::Rectangle<int> ampPanel (895, row1Y + 25, 295, 155);
     drawSectionPanel (g, ampPanel);
 
-    // LFO panel
-    juce::Rectangle<int> lfoPanel (5, row2Y + 25, 180, 215);
+    // ROW 2 PANELS
+    juce::Rectangle<int> lfoPanel (5, row2Y + 25, 175, 155);
     drawSectionPanel (g, lfoPanel);
 
-    // Drive panel
-    juce::Rectangle<int> drivePanel (197, row2Y + 25, 180, 215);
+    juce::Rectangle<int> velPanel (190, row2Y + 25, 175, 155);
+    drawSectionPanel (g, velPanel);
+
+    juce::Rectangle<int> drivePanel (375, row2Y + 25, 100, 155);
     drawSectionPanel (g, drivePanel);
 
-    // Vertical dividers with gradient
+    // ROW 3 PANELS
+    juce::Rectangle<int> unisonPanel (5, row3Y + 25, 175, 135);
+    drawSectionPanel (g, unisonPanel);
+
+    // Vertical dividers
     g.setColour (juce::Colour (0xff444444).withAlpha (0.5f));
-    g.drawLine (192.0f, 50.0f, 192.0f, 500.0f, 1.0f);
-    g.drawLine (392.0f, 50.0f, 392.0f, 500.0f, 1.0f);
-    g.drawLine (802.0f, 50.0f, 802.0f, 500.0f, 1.0f);
+    g.drawLine (245.0f, 50.0f, 245.0f, row2Y, 1.0f);
+    g.drawLine (490.0f, 50.0f, 490.0f, row2Y, 1.0f);
+    g.drawLine (890.0f, 50.0f, 890.0f, row2Y, 1.0f);
+    g.drawLine (185.0f, row2Y, 185.0f, row3Y, 1.0f);
+    g.drawLine (370.0f, row2Y, 370.0f, row3Y, 1.0f);
 
-    // Horizontal divider between rows
-    g.drawLine (0.0f, 275.0f, 1000.0f, 275.0f, 1.0f);
+    // Horizontal dividers between rows
+    g.drawLine (0.0f, row2Y - 5.0f, 1200.0f, row2Y - 5.0f, 1.0f);
+    g.drawLine (0.0f, row3Y - 5.0f, 1200.0f, row3Y - 5.0f, 1.0f);
 
-    // Section labels with better styling
+    // Section labels
     g.setColour (juce::Colour (0xffffcc66).withAlpha (0.9f));
     g.setFont (juce::Font (11.0f, juce::Font::bold));
-    g.drawText ("OSCILLATOR", 10, 60, 180, 20, juce::Justification::centred);
-    g.drawText ("FILTER", 200, 60, 180, 20, juce::Justification::centred);
-    g.drawText ("FILTER ENVELOPE", 400, 60, 390, 20, juce::Justification::centred);
-    g.drawText ("AMP ENVELOPE", 810, 60, 180, 20, juce::Justification::centred);
-    g.drawText ("LFO", 10, 290, 180, 20, juce::Justification::centred);
-    g.drawText ("DRIVE", 200, 290, 180, 20, juce::Justification::centred);
+    g.drawText ("OSCILLATOR", 10, 60, 230, 20, juce::Justification::centred);
+    g.drawText ("FILTER", 255, 60, 230, 20, juce::Justification::centred);
+    g.drawText ("FILTER ENVELOPE", 500, 60, 380, 20, juce::Justification::centred);
+    g.drawText ("AMP ENVELOPE", 900, 60, 285, 20, juce::Justification::centred);
+    g.drawText ("LFO", 10, row2Y + 10, 170, 20, juce::Justification::centred);
+    g.drawText ("VELOCITY", 195, row2Y + 10, 170, 20, juce::Justification::centred);
+    g.drawText ("DRIVE", 380, row2Y + 10, 90, 20, juce::Justification::centred);
+    g.drawText ("UNISON", 10, row3Y + 10, 170, 20, juce::Justification::centred);
 }
 
 void PluginEditor::resized()
@@ -215,39 +278,58 @@ void PluginEditor::resized()
     auto bounds = getLocalBounds();
     bounds.removeFromTop (50);  // Title area
 
-    const int knobSize = 100;
-    const int labelHeight = 20;
-    const int spacing = 10;
+    const int knobSize = 70;
+    const int labelHeight = 18;
+    const int spacing = 8;
 
-    // Row 1
-    auto row1 = bounds.removeFromTop (200);
+    // === ROW 1 ===
+    auto row1 = bounds.removeFromTop (190);
 
-    // Oscillator Section (left)
-    auto oscArea = row1.removeFromLeft (190);
-    oscArea.removeFromTop (30);  // Section label space
-    auto subArea = oscArea.withSizeKeepingCentre (knobSize, knobSize + labelHeight);
-    subMixLabel.setBounds (subArea.removeFromBottom (labelHeight));
-    subMixSlider.setBounds (subArea);
+    // Oscillator Section: Sub Mix, Sub Octave, Glide
+    auto oscArea = row1.removeFromLeft (240);
+    oscArea.removeFromTop (30);  // Label space
+    auto oscRow = oscArea.removeFromTop (knobSize + labelHeight);
 
-    row1.removeFromLeft (12);  // Divider space
+    auto subMixArea = oscRow.removeFromLeft (70);
+    subMixLabel.setBounds (subMixArea.removeFromBottom (labelHeight));
+    subMixSlider.setBounds (subMixArea);
 
-    // Filter Section
-    auto filterArea = row1.removeFromLeft (190);
+    oscRow.removeFromLeft (spacing);
+    auto glideArea = oscRow.removeFromLeft (70);
+    glideLabel.setBounds (glideArea.removeFromBottom (labelHeight));
+    glideSlider.setBounds (glideArea);
+
+    // Sub octave selector below
+    auto subOctRow = oscArea.withTrimmedTop (knobSize + labelHeight + 10);
+    subOctaveLabel.setBounds (subOctRow.removeFromTop (labelHeight));
+    subOctaveCombo.setBounds (subOctRow.removeFromTop (25).reduced (10, 0));
+
+    row1.removeFromLeft (10);  // Divider space
+
+    // Filter Section: Cutoff, Resonance, Key Track
+    auto filterArea = row1.removeFromLeft (240);
     filterArea.removeFromTop (30);
     auto filterRow = filterArea.removeFromTop (knobSize + labelHeight);
 
-    auto cutoffArea = filterRow.removeFromLeft (90);
+    auto cutoffArea = filterRow.removeFromLeft (70);
     filterCutoffLabel.setBounds (cutoffArea.removeFromBottom (labelHeight));
     filterCutoffSlider.setBounds (cutoffArea);
 
     filterRow.removeFromLeft (spacing);
-    filterResonanceLabel.setBounds (filterRow.removeFromBottom (labelHeight));
-    filterResonanceSlider.setBounds (filterRow);
+    auto resArea = filterRow.removeFromLeft (70);
+    filterResonanceLabel.setBounds (resArea.removeFromBottom (labelHeight));
+    filterResonanceSlider.setBounds (resArea);
 
-    row1.removeFromLeft (12);  // Divider space
+    // Key track below
+    auto keyTrackRow = filterArea.withTrimmedTop (knobSize + labelHeight + 10);
+    auto keyTrackArea = keyTrackRow.removeFromLeft (70);
+    filterKeyTrackLabel.setBounds (keyTrackArea.removeFromBottom (labelHeight));
+    filterKeyTrackSlider.setBounds (keyTrackArea);
 
-    // Filter Envelope Section
-    auto filterEnvArea = row1.removeFromLeft (390);
+    row1.removeFromLeft (10);  // Divider space
+
+    // Filter Envelope: A, D, S, R, Amount
+    auto filterEnvArea = row1.removeFromLeft (395);
     filterEnvArea.removeFromTop (30);
     auto filterEnvRow = filterEnvArea.removeFromTop (knobSize + labelHeight);
 
@@ -274,24 +356,24 @@ void PluginEditor::resized()
     filterEnvAmountLabel.setBounds (filterEnvRow.removeFromBottom (labelHeight));
     filterEnvAmountSlider.setBounds (filterEnvRow);
 
-    row1.removeFromLeft (12);  // Divider space
+    row1.removeFromLeft (10);  // Divider space
 
-    // Amp Envelope Section (right)
+    // Amp Envelope: A, D, S, R
     auto ampEnvArea = row1;
     ampEnvArea.removeFromTop (30);
     auto ampEnvRow = ampEnvArea.removeFromTop (knobSize + labelHeight);
 
-    auto aAttackArea = ampEnvRow.removeFromLeft (40);
+    auto aAttackArea = ampEnvRow.removeFromLeft (65);
     ampAttackLabel.setBounds (aAttackArea.removeFromBottom (labelHeight));
     ampAttackSlider.setBounds (aAttackArea);
 
     ampEnvRow.removeFromLeft (spacing);
-    auto aDecayArea = ampEnvRow.removeFromLeft (40);
+    auto aDecayArea = ampEnvRow.removeFromLeft (65);
     ampDecayLabel.setBounds (aDecayArea.removeFromBottom (labelHeight));
     ampDecaySlider.setBounds (aDecayArea);
 
     ampEnvRow.removeFromLeft (spacing);
-    auto aSustainArea = ampEnvRow.removeFromLeft (40);
+    auto aSustainArea = ampEnvRow.removeFromLeft (65);
     ampSustainLabel.setBounds (aSustainArea.removeFromBottom (labelHeight));
     ampSustainSlider.setBounds (aSustainArea);
 
@@ -299,15 +381,15 @@ void PluginEditor::resized()
     ampReleaseLabel.setBounds (ampEnvRow.removeFromBottom (labelHeight));
     ampReleaseSlider.setBounds (ampEnvRow);
 
-    // Row 2 - LFO and Drive
-    auto row2 = bounds.removeFromTop (200);
+    // === ROW 2 ===
+    auto row2 = bounds.removeFromTop (190);
 
     // LFO Section
-    auto lfoArea = row2.removeFromLeft (190);
+    auto lfoArea = row2.removeFromLeft (180);
     lfoArea.removeFromTop (30);
     auto lfoRow = lfoArea.removeFromTop (knobSize + labelHeight);
 
-    auto rateArea = lfoRow.removeFromLeft (90);
+    auto rateArea = lfoRow.removeFromLeft (80);
     lfoRateLabel.setBounds (rateArea.removeFromBottom (labelHeight));
     lfoRateSlider.setBounds (rateArea);
 
@@ -315,14 +397,45 @@ void PluginEditor::resized()
     lfoAmountLabel.setBounds (lfoRow.removeFromBottom (labelHeight));
     lfoAmountSlider.setBounds (lfoRow);
 
-    row2.removeFromLeft (12);  // Divider space
+    row2.removeFromLeft (10);  // Divider space
+
+    // Velocity Section
+    auto velArea = row2.removeFromLeft (180);
+    velArea.removeFromTop (30);
+    auto velRow = velArea.removeFromTop (knobSize + labelHeight);
+
+    auto velFiltArea = velRow.removeFromLeft (80);
+    velToFilterLabel.setBounds (velFiltArea.removeFromBottom (labelHeight));
+    velToFilterSlider.setBounds (velFiltArea);
+
+    velRow.removeFromLeft (spacing);
+    velToAmpLabel.setBounds (velRow.removeFromBottom (labelHeight));
+    velToAmpSlider.setBounds (velRow);
+
+    row2.removeFromLeft (10);  // Divider space
 
     // Drive Section
-    auto driveArea = row2.removeFromLeft (190);
+    auto driveArea = row2.removeFromLeft (105);
     driveArea.removeFromTop (30);
     auto dArea = driveArea.withSizeKeepingCentre (knobSize, knobSize + labelHeight);
     driveLabel.setBounds (dArea.removeFromBottom (labelHeight));
     driveSlider.setBounds (dArea);
+
+    // === ROW 3 ===
+    auto row3 = bounds.removeFromTop (140);
+
+    // Unison Section
+    auto unisonArea = row3.removeFromLeft (180);
+    unisonArea.removeFromTop (30);
+    auto unisonRow = unisonArea.removeFromTop (knobSize + labelHeight);
+
+    auto voicesArea = unisonRow.removeFromLeft (80);
+    unisonVoicesLabel.setBounds (voicesArea.removeFromBottom (labelHeight));
+    unisonVoicesSlider.setBounds (voicesArea);
+
+    unisonRow.removeFromLeft (spacing);
+    thiccLabel.setBounds (unisonRow.removeFromBottom (labelHeight));
+    thiccSlider.setBounds (unisonRow);
 
     // Inspector button
     inspectButton.setBounds (bounds.removeFromBottom(40).withSizeKeepingCentre(100, 25));

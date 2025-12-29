@@ -61,6 +61,15 @@ public:
     static constexpr const char* LFO_AMOUNT_ID = "lfoAmount";
     static constexpr const char* DRIVE_AMOUNT_ID = "driveAmount";
 
+    // Phase 3 Parameter IDs
+    static constexpr const char* GLIDE_TIME_ID = "glideTime";
+    static constexpr const char* VELOCITY_TO_FILTER_ID = "velocityToFilter";
+    static constexpr const char* VELOCITY_TO_AMP_ID = "velocityToAmp";
+    static constexpr const char* FILTER_KEY_TRACK_ID = "filterKeyTrack";
+    static constexpr const char* UNISON_VOICES_ID = "unisonVoices";
+    static constexpr const char* UNISON_DETUNE_ID = "unisonDetune";
+    static constexpr const char* SUB_OCTAVE_ID = "subOctave";
+
 private:
     // Create APVTS parameter layout
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

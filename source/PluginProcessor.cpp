@@ -151,6 +151,62 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
         0.0f,  // default 0 (clean)
         ""));
 
+    // === PHASE 3 PARAMETERS ===
+
+    // Glide Time (0ms - 2s, logarithmic)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (GLIDE_TIME_ID, 1),
+        "Glide Time",
+        juce::NormalisableRange<float> (0.0f, 2.0f, 0.001f, 0.3f),
+        0.0f,  // default 0 (no glide)
+        "s"));
+
+    // Velocity to Filter Amount (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (VELOCITY_TO_FILTER_ID, 1),
+        "Velocity to Filter",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.5f,  // default 50%
+        ""));
+
+    // Velocity to Amp Amount (0.0 - 1.0)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (VELOCITY_TO_AMP_ID, 1),
+        "Velocity to Amp",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.7f,  // default 70%
+        ""));
+
+    // Filter Key Tracking (0.0 - 1.0, 0% to 100%)
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (FILTER_KEY_TRACK_ID, 1),
+        "Filter Key Track",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.0f,  // default 0 (no tracking)
+        ""));
+
+    // Unison Voices (1 - 5)
+    layout.add (std::make_unique<juce::AudioParameterInt> (
+        juce::ParameterID (UNISON_VOICES_ID, 1),
+        "Unison Voices",
+        1, 5,
+        1));  // default 1 voice (no unison)
+
+    // Unison Detune Amount (0.0 - 1.0) - "THICC" control
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        juce::ParameterID (UNISON_DETUNE_ID, 1),
+        "THICC",
+        juce::NormalisableRange<float> (0.0f, 1.0f, 0.01f),
+        0.0f,  // default 0 (no detune)
+        ""));
+
+    // Sub Octave Selector (-1 or -2 octaves)
+    layout.add (std::make_unique<juce::AudioParameterChoice> (
+        juce::ParameterID (SUB_OCTAVE_ID, 1),
+        "Sub Octave",
+        juce::StringArray { "-1 Oct", "-2 Oct" },
+        0));  // default -1 octave
+
     return layout;
 }
 
@@ -173,6 +229,15 @@ void PluginProcessor::updateVoiceParameters()
     float lfoAmount = apvts.getRawParameterValue (LFO_AMOUNT_ID)->load();
     float driveAmount = apvts.getRawParameterValue (DRIVE_AMOUNT_ID)->load();
 
+    // Phase 3 parameters
+    float glideTime = apvts.getRawParameterValue (GLIDE_TIME_ID)->load();
+    float velocityToFilter = apvts.getRawParameterValue (VELOCITY_TO_FILTER_ID)->load();
+    float velocityToAmp = apvts.getRawParameterValue (VELOCITY_TO_AMP_ID)->load();
+    float filterKeyTrack = apvts.getRawParameterValue (FILTER_KEY_TRACK_ID)->load();
+    int unisonVoices = static_cast<int> (apvts.getRawParameterValue (UNISON_VOICES_ID)->load());
+    float unisonDetune = apvts.getRawParameterValue (UNISON_DETUNE_ID)->load();
+    int subOctave = static_cast<int> (apvts.getRawParameterValue (SUB_OCTAVE_ID)->load());
+
     // Update all voices
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
@@ -187,6 +252,15 @@ void PluginProcessor::updateVoiceParameters()
             voice->setLFORate (lfoRate);
             voice->setLFOAmount (lfoAmount);
             voice->setDriveAmount (driveAmount);
+
+            // Phase 3 parameters
+            voice->setGlideTime (glideTime);
+            voice->setVelocityToFilter (velocityToFilter);
+            voice->setVelocityToAmp (velocityToAmp);
+            voice->setFilterKeyTracking (filterKeyTrack);
+            voice->setUnisonVoices (unisonVoices);
+            voice->setUnisonDetune (unisonDetune);
+            voice->setSubOctave (subOctave + 1);  // Convert 0,1 to 1,2
         }
     }
 }
@@ -324,6 +398,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     // Render synthesizer audio
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+
+    // === Phase 3: Soft clipper/limiter on output (always on) ===
+    // Apply gentle tanh soft clipping to prevent harsh clipping
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+        auto* channelData = buffer.getWritePointer (channel);
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            // Soft clip with tanh (smooth saturation)
+            channelData[sample] = std::tanh (channelData[sample] * 0.8f) * 1.2f;
+        }
+    }
 }
 
 //==============================================================================

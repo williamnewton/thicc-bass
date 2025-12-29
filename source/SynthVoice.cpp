@@ -40,7 +40,11 @@ void SynthVoice::startNote (int midiNoteNumber, float velocity,
 
     // Reset phase to avoid clicks
     phase = 0.0;
-    subPhase = 0.0;  // Reset sub-oscillator phase too
+    subPhase = 0.0;
+
+    // Phase 3: Reset unison oscillator phases
+    for (auto& uniPhase : unisonPhases)
+        uniPhase = 0.0;
 
     // Trigger envelopes
     ampEnvelope.noteOn();
@@ -118,6 +122,10 @@ void SynthVoice::prepareToPlay (double sampleRate, int samplesPerBlock, int numC
 
     // Allocate temporary buffer for processing
     tempBuffer.setSize (numChannels, samplesPerBlock);
+
+    // Initialize glide smoother (Phase 3)
+    glidedFrequency.reset (sampleRate, 0.1);  // Default 100ms glide
+    glidedFrequency.setCurrentAndTargetValue (440.0);
 }
 
 void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
@@ -134,6 +142,9 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
     // Render audio
     for (int sample = 0; sample < numSamples; ++sample)
     {
+        // === Phase 3: Update glided frequency ===
+        updateGlidedFrequency();
+
         // Generate LFO (sine wave, -1 to 1)
         float lfoValue = std::sin (static_cast<float> (juce::MathConstants<double>::twoPi * lfoPhase));
 
@@ -143,15 +154,28 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         if (lfoPhase >= 1.0)
             lfoPhase -= 1.0;
 
-        // Get filter envelope value (0-1)
-        float filterEnvValue = filterEnvelope.getNextSample();
+        // === Phase 3: Get envelope values with exponential curves ===
+        float filterEnvValue = applyExponentialCurve (filterEnvelope.getNextSample());
+        float ampEnvValue = applyExponentialCurve (ampEnvelope.getNextSample());
+
+        // === Phase 3: Velocity sensitivity for filter ===
+        float velocityFilterMod = (currentVelocity - 0.5f) * 2.0f * velocityToFilterAmount;  // -1 to +1 range
+        velocityFilterMod *= 3000.0f;  // +/- 3kHz based on velocity
+
+        // === Phase 3: Filter key tracking ===
+        float keyTrackMod = 0.0f;
+        if (filterKeyTrackAmount > 0.01f)
+        {
+            // C4 (MIDI 60) is the reference point
+            float noteOffset = currentMidiNote - 60;
+            keyTrackMod = noteOffset * 50.0f * filterKeyTrackAmount;  // 50 Hz per semitone at 100%
+        }
 
         // Apply modulation to cutoff frequency
-        // Base cutoff + (envelope * amount) + (LFO * amount)
         float baseCutoff = smoothedCutoff.isSmoothing() ? smoothedCutoff.getNextValue() : smoothedCutoff.getCurrentValue();
-        float envModulation = filterEnvValue * filterEnvAmount * 10000.0f;  // Envelope: up to +10kHz
-        float lfoModulation = lfoValue * lfoAmount * 5000.0f;               // LFO: +/- 5kHz
-        float modulatedCutoff = baseCutoff + envModulation + lfoModulation;
+        float envModulation = filterEnvValue * filterEnvAmount * 10000.0f;   // Envelope: up to +10kHz
+        float lfoModulation = lfoValue * lfoAmount * 5000.0f;                // LFO: +/- 5kHz
+        float modulatedCutoff = baseCutoff + envModulation + lfoModulation + velocityFilterMod + keyTrackMod;
 
         // Update filter parameters
         filter.setCutoffFrequencyHz (juce::jlimit (20.0f, 20000.0f, modulatedCutoff));
@@ -159,24 +183,60 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         if (smoothedResonance.isSmoothing())
             filter.setResonance (smoothedResonance.getNextValue());
 
-        // Generate main oscillator sample (sawtooth)
-        float oscSample = generateOscillator();
+        // === Phase 3: Unison - generate multiple detuned oscillators ===
+        float unisonSample = 0.0f;
 
-        // Generate sub-oscillator sample (sine, -1 octave)
+        for (int voice = 0; voice < unisonVoices; ++voice)
+        {
+            // Calculate detune amount for this voice
+            float detuneCents = 0.0f;
+            if (unisonVoices > 1 && unisonDetune > 0.01f)
+            {
+                // Spread voices evenly: -detune to +detune
+                float spread = (voice / static_cast<float> (unisonVoices - 1)) - 0.5f;  // -0.5 to +0.5
+                detuneCents = spread * unisonDetune * 100.0f;  // Up to +/- 100 cents at max detune
+            }
+
+            // Calculate detuned frequency
+            float detuneRatio = std::pow (2.0f, detuneCents / 1200.0f);
+            double detunedPhaseDelta = phaseDelta * detuneRatio;
+
+            // Generate oscillator sample for this unison voice
+            double voicePhase = (voice == 0) ? phase : unisonPhases[voice];
+            float oscOutput = static_cast<float> (voicePhase * 2.0 - 1.0);
+            oscOutput -= polyBlep (voicePhase);
+
+            // Increment and wrap phase for this voice
+            voicePhase += detunedPhaseDelta;
+            if (voicePhase >= 1.0)
+                voicePhase -= 1.0;
+
+            // Store phase for non-primary voices
+            if (voice == 0)
+                phase = voicePhase;
+            else
+                unisonPhases[voice] = voicePhase;
+
+            // Add to unison mix
+            unisonSample += oscOutput;
+        }
+
+        // Average the unison voices
+        if (unisonVoices > 1)
+            unisonSample /= static_cast<float> (unisonVoices);
+
+        // Generate sub-oscillator sample
         float subSample = generateSubOscillator();
 
-        // Mix oscillators (as per bass design guide: keep sub separate for mono)
-        // Main osc + weighted sub osc
-        float mixedSample = oscSample + (subSample * subMix);
+        // Mix oscillators
+        float mixedSample = unisonSample + (subSample * subMix);
 
-        // Apply velocity
-        mixedSample *= currentVelocity;
+        // === Phase 3: Velocity sensitivity for amp ===
+        float velocityGain = 1.0f - velocityToAmpAmount + (currentVelocity * velocityToAmpAmount);
+        mixedSample *= velocityGain;
 
-        // Get envelope value
-        float envValue = ampEnvelope.getNextSample();
-
-        // Apply envelope to sample
-        float finalSample = mixedSample * envValue;
+        // Apply amplitude envelope
+        float finalSample = mixedSample * ampEnvValue;
 
         // Write to all output channels
         for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
@@ -272,15 +332,95 @@ void SynthVoice::setDriveAmount (float drive)
     driveAmount = juce::jlimit (0.0f, 1.0f, drive);
 }
 
+// === Phase 3 Setters ===
+
+void SynthVoice::setGlideTime (float time)
+{
+    glideTime = juce::jlimit (0.0f, 2.0f, time);
+    // Update glide smoothing rate based on glide time
+    if (glideTime > 0.001f)
+        glidedFrequency.reset (currentSampleRate, glideTime);
+    else
+        glidedFrequency.reset (currentSampleRate, 0.0001);  // Instant
+}
+
+void SynthVoice::setVelocityToFilter (float amount)
+{
+    velocityToFilterAmount = juce::jlimit (0.0f, 1.0f, amount);
+}
+
+void SynthVoice::setVelocityToAmp (float amount)
+{
+    velocityToAmpAmount = juce::jlimit (0.0f, 1.0f, amount);
+}
+
+void SynthVoice::setFilterKeyTracking (float amount)
+{
+    filterKeyTrackAmount = juce::jlimit (0.0f, 1.0f, amount);
+}
+
+void SynthVoice::setUnisonVoices (int voices)
+{
+    unisonVoices = juce::jlimit (1, 5, voices);
+}
+
+void SynthVoice::setUnisonDetune (float detune)
+{
+    unisonDetune = juce::jlimit (0.0f, 1.0f, detune);
+}
+
+void SynthVoice::setSubOctave (int octave)
+{
+    subOctaveDown = juce::jlimit (1, 2, octave);
+}
+
+// === Helper Methods ===
+
+float SynthVoice::applyExponentialCurve (float linearValue)
+{
+    // Apply exponential shaping for more natural envelope response
+    // y = x^2 gives a nice exponential feel for envelopes
+    return linearValue * linearValue;
+}
+
 void SynthVoice::updateFrequency()
 {
     // Convert MIDI note to frequency using equal temperament
-    frequency = 440.0 * std::pow (2.0, (currentMidiNote - 69) / 12.0);
+    targetFrequency = 440.0 * std::pow (2.0, (currentMidiNote - 69) / 12.0);
+
+    // If glide is off, jump immediately
+    if (glideTime < 0.001f)
+    {
+        frequency = targetFrequency;
+        glidedFrequency.setCurrentAndTargetValue (targetFrequency);
+    }
+    else
+    {
+        // Set target for glide
+        glidedFrequency.setTargetValue (targetFrequency);
+    }
+
     phaseDelta = frequency / currentSampleRate;
 
-    // Sub-oscillator is one octave down (half the frequency)
-    double subFrequency = frequency * 0.5;
+    // Sub-oscillator: 1 or 2 octaves down
+    double subDivisor = (subOctaveDown == 1) ? 2.0 : 4.0;
+    double subFrequency = frequency / subDivisor;
     subPhaseDelta = subFrequency / currentSampleRate;
+}
+
+void SynthVoice::updateGlidedFrequency()
+{
+    // Update glided frequency if gliding
+    if (glidedFrequency.isSmoothing())
+    {
+        frequency = glidedFrequency.getNextValue();
+        phaseDelta = frequency / currentSampleRate;
+
+        // Update sub-oscillator too
+        double subDivisor = (subOctaveDown == 1) ? 2.0 : 4.0;
+        double subFrequency = frequency / subDivisor;
+        subPhaseDelta = subFrequency / currentSampleRate;
+    }
 }
 
 float SynthVoice::generateOscillator()
