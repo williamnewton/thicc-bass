@@ -16,9 +16,9 @@ public:
     {
         auto bounds = getLocalBounds().toFloat();
 
-        // Label
+        // Label - black bold text
         g.setFont (juce::Font (11.0f, juce::Font::bold));
-        g.setColour (juce::Colour (0xffffcc66).withAlpha (0.9f));
+        g.setColour (juce::Colour (0xff000000));
         g.drawText ("OUTPUT", bounds.removeFromTop (20), juce::Justification::centred);
 
         // Circular meter area
@@ -26,16 +26,12 @@ public:
         auto radius = juce::jmin (meterBounds.getWidth(), meterBounds.getHeight()) / 2.0f;
         auto center = meterBounds.getCentre();
 
-        // Outer ring shadow
-        g.setColour (juce::Colours::black.withAlpha (0.5f));
-        g.fillEllipse (center.x - radius + 2.0f, center.y - radius + 2.0f, radius * 2.0f, radius * 2.0f);
+        // Outer ring shadow (drop shadow for cartoon effect)
+        g.setColour (juce::Colours::black.withAlpha (0.3f));
+        g.fillEllipse (center.x - radius + 3.0f, center.y - radius + 3.0f, radius * 2.0f, radius * 2.0f);
 
-        // Background circle
-        juce::ColourGradient bgGradient (
-            juce::Colour (0xff1a1a1a), center.x, center.y - radius,
-            juce::Colour (0xff0f0f0f), center.x, center.y + radius,
-            false);
-        g.setGradientFill (bgGradient);
+        // Background circle - white for street art style
+        g.setColour (juce::Colour (0xffffffff));
         g.fillEllipse (center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f);
 
         // Meter level arc
@@ -50,14 +46,14 @@ public:
                                startAngle, levelAngle,
                                true);
 
-        // Determine color based on level (blue → yellow → red)
+        // Determine color based on level (orange → red → hot pink for street art style)
         juce::Colour levelColor;
         if (displayLevel < 0.7f)
-            levelColor = juce::Colour (0xff66CCFF);  // Blue (normal)
+            levelColor = juce::Colour (0xffFF6600);  // Orange (normal)
         else if (displayLevel < 0.9f)
-            levelColor = juce::Colour (0xffFFCC00);  // Yellow (warning)
+            levelColor = juce::Colour (0xffFF3333);  // Red (warning)
         else
-            levelColor = juce::Colour (0xffFF3333);  // Red (clip danger)
+            levelColor = juce::Colour (0xffFF0066);  // Hot pink (clip danger)
 
         // Glow effect
         g.setColour (levelColor.withAlpha (0.3f));
@@ -67,7 +63,7 @@ public:
         g.setColour (levelColor);
         g.strokePath (levelArc, juce::PathStrokeType (10.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Peak hold indicator
+        // Peak hold indicator - bright yellow
         if (peakLevel > 0.05f)
         {
             float peakAngle = startAngle + (peakLevel * (endAngle - startAngle));
@@ -76,11 +72,11 @@ public:
                 center.y + std::sin (peakAngle) * (radius - 15.0f)
             );
 
-            g.setColour (juce::Colour (0xffFFCC66));
+            g.setColour (juce::Colour (0xffffdd00));
             g.fillEllipse (peakPoint.x - 4.0f, peakPoint.y - 4.0f, 8.0f, 8.0f);
         }
 
-        // Tick marks
+        // Tick marks - visible on white background
         for (int i = 0; i <= 10; ++i)
         {
             float angle = startAngle + (i / 10.0f) * (endAngle - startAngle);
@@ -96,27 +92,27 @@ public:
                 center.y + std::sin (angle) * tickRadius2
             );
 
-            g.setColour (juce::Colour (0xff444444));
+            g.setColour (juce::Colour (0xffcccccc));
             g.drawLine (tickStart.x, tickStart.y, tickEnd.x, tickEnd.y, 1.5f);
         }
 
-        // Center text showing level in dB
+        // Center text showing level in dB - black on white background
         float levelDb = juce::Decibels::gainToDecibels (displayLevel + 0.001f);
         juce::String levelText = levelDb > -60.0f ? juce::String (levelDb, 1) + " dB" : "-inf";
 
         g.setFont (juce::Font (14.0f, juce::Font::bold));
-        g.setColour (juce::Colour (0xffE0E0E0));
+        g.setColour (juce::Colour (0xff000000));
         g.drawText (levelText,
                    juce::Rectangle<float> (center.x - 40.0f, center.y - 10.0f, 80.0f, 20.0f),
                    juce::Justification::centred);
 
-        // Outer ring
-        g.setColour (juce::Colour (0xff555555));
-        g.drawEllipse (center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f, 2.0f);
+        // Outer ring - bold black outline (comic book style)
+        g.setColour (juce::Colour (0xff000000));
+        g.drawEllipse (center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f, 3.0f);
 
-        // "PHASE" label at bottom (like reference image)
-        g.setFont (juce::Font (10.0f, juce::Font::plain));
-        g.setColour (juce::Colour (0xff888888));
+        // "LEVEL" label at bottom
+        g.setFont (juce::Font (10.0f, juce::Font::bold));
+        g.setColour (juce::Colour (0xff000000));
         g.drawText ("LEVEL", bounds.removeFromBottom (15), juce::Justification::centred);
     }
 

@@ -18,30 +18,29 @@ public:
     {
         auto bounds = getLocalBounds().toFloat();
 
-        // Dark background with subtle gradient
-        juce::ColourGradient bgGradient (
-            juce::Colour (0xff1a1a1a), bounds.getCentreX(), bounds.getY(),
-            juce::Colour (0xff0f0f0f), bounds.getCentreX(), bounds.getBottom(),
-            false);
-        g.setGradientFill (bgGradient);
+        // White background with drop shadow (street art style)
+        g.setColour (juce::Colours::black.withAlpha (0.3f));
+        g.fillRoundedRectangle (bounds.translated (3.0f, 3.0f), 4.0f);
+
+        g.setColour (juce::Colour (0xffffffff));
         g.fillRoundedRectangle (bounds, 4.0f);
 
-        // Outer border
-        g.setColour (juce::Colour (0xff333333));
-        g.drawRoundedRectangle (bounds, 4.0f, 1.5f);
+        // Outer border - bold black (comic book style)
+        g.setColour (juce::Colour (0xff000000));
+        g.drawRoundedRectangle (bounds, 4.0f, 3.0f);
 
-        // Grid lines for reference
-        g.setColour (juce::Colour (0xff2a2a2a));
+        // Grid lines for reference - light gray on white background
+        g.setColour (juce::Colour (0xffe0e0e0));
         float centerY = bounds.getCentreY();
 
         // Horizontal center line
-        g.drawLine (bounds.getX(), centerY, bounds.getRight(), centerY, 0.5f);
+        g.drawLine (bounds.getX(), centerY, bounds.getRight(), centerY, 1.0f);
 
         // Vertical grid lines
         for (int i = 1; i < 8; ++i)
         {
             float x = bounds.getX() + (bounds.getWidth() / 8.0f) * i;
-            g.drawLine (x, bounds.getY(), x, bounds.getBottom(), 0.5f);
+            g.drawLine (x, bounds.getY(), x, bounds.getBottom(), 1.0f);
         }
 
         // Draw waveform
@@ -68,16 +67,16 @@ public:
             }
         }
 
-        // Glow effect for waveform
-        g.setColour (juce::Colour (0xff66CCFF).withAlpha (0.3f));
-        g.strokePath (waveformPath, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        // Glow effect for waveform - red/orange gradient
+        g.setColour (juce::Colour (0xffFF3333).withAlpha (0.4f));
+        g.strokePath (waveformPath, juce::PathStrokeType (4.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Main waveform line
-        g.setColour (juce::Colour (0xff66CCFF));
-        g.strokePath (waveformPath, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        // Main waveform line - vibrant red
+        g.setColour (juce::Colour (0xffFF3333));
+        g.strokePath (waveformPath, juce::PathStrokeType (2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Label
-        g.setColour (juce::Colour (0xffffcc66).withAlpha (0.8f));
+        // Label - black bold text
+        g.setColour (juce::Colour (0xff000000));
         g.setFont (juce::Font (9.0f, juce::Font::bold));
         g.drawText ("WAVEFORM", bounds.reduced (4.0f).removeFromTop (12), juce::Justification::left);
     }

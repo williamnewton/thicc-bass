@@ -7,92 +7,83 @@ class ThiccBassLookAndFeel : public juce::LookAndFeel_V4
 public:
     ThiccBassLookAndFeel()
     {
-        // Set color scheme
-        setColour (juce::Slider::thumbColourId, juce::Colour (0xffffcc66));      // Gold/yellow
-        setColour (juce::Slider::rotarySliderFillColourId, juce::Colour (0xffffcc66));
-        setColour (juce::Slider::rotarySliderOutlineColourId, juce::Colour (0xff333333));
-        setColour (juce::Slider::textBoxTextColourId, juce::Colours::white);
-        setColour (juce::Slider::textBoxBackgroundColourId, juce::Colour (0xff1a1a1a));
+        // Set color scheme - cartoonish/street art style
+        setColour (juce::Slider::thumbColourId, juce::Colour (0xffff3366));      // Hot pink/red
+        setColour (juce::Slider::rotarySliderFillColourId, juce::Colour (0xffff3366));
+        setColour (juce::Slider::rotarySliderOutlineColourId, juce::Colour (0xff000000));
+        setColour (juce::Slider::textBoxTextColourId, juce::Colour (0xff000000));
+        setColour (juce::Slider::textBoxBackgroundColourId, juce::Colour (0xffffffff));
         setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
 
-        setColour (juce::Label::textColourId, juce::Colours::white);
+        setColour (juce::Label::textColourId, juce::Colour (0xff000000));
     }
 
     void drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
                           float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                           juce::Slider& slider) override
     {
-        auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (8.0f);
+        auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (10.0f);
         auto radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-        auto lineW = juce::jmin (8.0f, radius * 0.15f);
-        auto arcRadius = radius - lineW * 0.5f;
         auto center = bounds.getCentre();
 
-        // Larger, cleaner drop shadow
-        g.setColour (juce::Colours::black.withAlpha (0.6f));
-        g.fillEllipse (bounds.translated (0.0f, 3.0f).reduced (-3.0f));
+        // CARTOON STYLE: Bold drop shadow (offset down-right)
+        g.setColour (juce::Colours::black.withAlpha (0.3f));
+        g.fillEllipse (bounds.translated (4.0f, 4.0f));
 
-        // Main knob body - solid color like reference image
-        g.setColour (juce::Colour (0xffffcc66));  // Gold color
+        // Main knob body - bright vibrant color
+        juce::ColourGradient gradient (
+            juce::Colour (0xffff6699), center.x - radius * 0.3f, center.y - radius * 0.3f,  // Light pink top-left
+            juce::Colour (0xffff0066), center.x + radius * 0.3f, center.y + radius * 0.3f,  // Deep pink bottom-right
+            true);
+        g.setGradientFill (gradient);
         g.fillEllipse (bounds);
 
-        // Subtle inner shadow for depth
-        g.setColour (juce::Colours::black.withAlpha (0.15f));
-        g.drawEllipse (bounds.reduced (2.0f), 2.0f);
+        // CARTOON STYLE: Bold black outline (comic book style)
+        g.setColour (juce::Colours::black);
+        g.drawEllipse (bounds, 4.0f);
 
-        // Tick marks around the knob (cleaner, reference-image style)
-        auto numTicks = 11;
-        for (int i = 0; i < numTicks; ++i)
-        {
-            auto angle = rotaryStartAngle + (i / (float)(numTicks - 1)) * (rotaryEndAngle - rotaryStartAngle);
-            auto tickRadius = radius + 8.0f;
-            auto tickLength = 5.0f;
+        // Inner highlight for "pop" effect
+        auto highlightBounds = bounds.reduced (8.0f);
+        g.setColour (juce::Colours::white.withAlpha (0.4f));
+        g.fillEllipse (highlightBounds.removeFromTop (highlightBounds.getHeight() * 0.4f));
 
-            juce::Point<float> tickStart (center.x + std::sin (angle) * tickRadius,
-                                         center.y - std::cos (angle) * tickRadius);
-            juce::Point<float> tickEnd (center.x + std::sin (angle) * (tickRadius + tickLength),
-                                       center.y - std::cos (angle) * (tickRadius + tickLength));
-
-            // More prominent tick marks
-            g.setColour (juce::Colour (0xffE0E0E0).withAlpha (0.3f));
-            g.drawLine (tickStart.x, tickStart.y, tickEnd.x, tickEnd.y, 2.0f);
-        }
-
-        // Indicator line (like reference image - single line from center)
+        // Bold indicator line with outline
         juce::Path indicator;
-        auto indicatorLength = radius * 0.4f;
-        auto indicatorThickness = 4.0f;
+        auto indicatorLength = radius * 0.6f;
+        auto indicatorThickness = 6.0f;
 
-        indicator.addRectangle (-indicatorThickness * 0.5f, -radius * 0.7f, indicatorThickness, indicatorLength);
+        indicator.addRectangle (-indicatorThickness * 0.5f, -radius * 0.8f, indicatorThickness, indicatorLength);
 
-        // Indicator shadow
-        g.setColour (juce::Colours::black.withAlpha (0.4f));
-        g.fillPath (indicator, juce::AffineTransform::rotation (toAngle).translated (center.x + 1.0f, center.y + 1.0f));
-
-        // Main indicator (dark contrasting line)
-        g.setColour (juce::Colour (0xff2a2a2a));
+        // Indicator outline (black)
+        g.setColour (juce::Colours::black);
         g.fillPath (indicator, juce::AffineTransform::rotation (toAngle).translated (center.x, center.y));
 
-        // Center dot for depth
-        auto centerDotRadius = radius * 0.12f;
-        g.setColour (juce::Colour (0xff1a1a1a));
-        g.fillEllipse (center.x - centerDotRadius, center.y - centerDotRadius,
-                       centerDotRadius * 2.0f, centerDotRadius * 2.0f);
+        // Indicator fill (bright yellow)
+        auto innerIndicator = indicator.createPathWithRoundedCorners (2.0f);
+        g.setColour (juce::Colour (0xffffdd00));
+        g.fillPath (innerIndicator, juce::AffineTransform::rotation (toAngle)
+                                                           .scaled (0.7f, 0.9f)
+                                                           .translated (center.x, center.y));
 
-        // Outer ring
-        g.setColour (juce::Colour (0xff888888).withAlpha (0.5f));
-        g.drawEllipse (bounds, 2.0f);
+        // Center circle with outline
+        auto centerRadius = radius * 0.2f;
+        g.setColour (juce::Colours::black);
+        g.fillEllipse (center.x - centerRadius - 2.0f, center.y - centerRadius - 2.0f,
+                       (centerRadius + 2.0f) * 2.0f, (centerRadius + 2.0f) * 2.0f);
+        g.setColour (juce::Colour (0xffffdd00));
+        g.fillEllipse (center.x - centerRadius, center.y - centerRadius,
+                       centerRadius * 2.0f, centerRadius * 2.0f);
     }
 
     juce::Label* createSliderTextBox (juce::Slider& slider) override
     {
         auto* l = LookAndFeel_V4::createSliderTextBox (slider);
         l->setJustificationType (juce::Justification::centred);
-        l->setFont (juce::Font (11.0f, juce::Font::bold));
-        l->setColour (juce::Label::textColourId, juce::Colour (0xffffcc66));
-        l->setColour (juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        l->setColour (juce::Label::outlineColourId, juce::Colours::transparentBlack);
+        l->setFont (juce::Font (12.0f, juce::Font::bold));
+        l->setColour (juce::Label::textColourId, juce::Colour (0xff000000));  // Black text
+        l->setColour (juce::Label::backgroundColourId, juce::Colour (0xffffffdd));  // Light yellow background for contrast
+        l->setColour (juce::Label::outlineColourId, juce::Colours::transparentBlack);  // No border
         return l;
     }
 };

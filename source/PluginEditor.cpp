@@ -17,7 +17,7 @@ static void setupSecondarySlider (juce::Slider& slider, juce::Label& label, cons
     slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 65, 18);
     label.setText (labelText, juce::dontSendNotification);
     label.setJustificationType (juce::Justification::centred);
-    label.setFont (juce::Font (10.0f));
+    label.setFont (juce::Font (10.0f, juce::Font::bold));
 }
 
 PluginEditor::PluginEditor (PluginProcessor& p)
@@ -31,34 +31,39 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (outputMeter);
     addAndMakeVisible (waveformVisualizer);
 
-    advancedButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2a2a));
-    advancedButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffffcc66));
-    advancedButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffE0E0E0));
-    advancedButton.setColour (juce::TextButton::textColourOnId, juce::Colour (0xff0a0a0a));
+    advancedButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xffFF6600));  // Orange
+    advancedButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffffdd00));  // Yellow when active
+    advancedButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffffff));
+    advancedButton.setColour (juce::TextButton::textColourOnId, juce::Colour (0xff000000));
     advancedButton.onClick = [this]() { toggleAdvancedPanel(); };
     addAndMakeVisible (advancedButton);
 
-    // Preset browser
-    prevPresetButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2a2a));
-    prevPresetButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffE0E0E0));
+    // Preset browser - street art style with vibrant colors
+    prevPresetButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xffFF3333));  // Red
+    prevPresetButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffffff));
+    prevPresetButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffFF6600));  // Orange when pressed
+    prevPresetButton.setColour (juce::ComboBox::outlineColourId, juce::Colour (0xff000000));
     prevPresetButton.onClick = [this]() {
         processorRef.previousPreset();
         updatePresetDisplay();
     };
     addAndMakeVisible (prevPresetButton);
 
-    nextPresetButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2a2a));
-    nextPresetButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffE0E0E0));
+    nextPresetButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xffFF3333));  // Red
+    nextPresetButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xffffffff));
+    nextPresetButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffFF6600));  // Orange when pressed
+    nextPresetButton.setColour (juce::ComboBox::outlineColourId, juce::Colour (0xff000000));
     nextPresetButton.onClick = [this]() {
         processorRef.nextPreset();
         updatePresetDisplay();
     };
     addAndMakeVisible (nextPresetButton);
 
-    presetNameLabel.setColour (juce::Label::textColourId, juce::Colour (0xffffcc66));
-    presetNameLabel.setColour (juce::Label::backgroundColourId, juce::Colour (0xff1a1a1a));
+    presetNameLabel.setColour (juce::Label::textColourId, juce::Colour (0xff000000));
+    presetNameLabel.setColour (juce::Label::backgroundColourId, juce::Colour (0xffffffff));  // White background
+    presetNameLabel.setColour (juce::Label::outlineColourId, juce::Colour (0xff000000));
     presetNameLabel.setJustificationType (juce::Justification::centred);
-    presetNameLabel.setFont (juce::Font (14.0f, juce::Font::bold));
+    presetNameLabel.setFont (juce::Font (16.0f, juce::Font::bold));
     addAndMakeVisible (presetNameLabel);
 
     updatePresetDisplay();
@@ -257,7 +262,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     // Sub Octave Selector
     subOctaveLabel.setText ("SUB OCT", juce::dontSendNotification);
     subOctaveLabel.setJustificationType (juce::Justification::centred);
-    subOctaveLabel.setFont (juce::Font (10.0f));
+    subOctaveLabel.setFont (juce::Font (10.0f, juce::Font::bold));
     subOctaveLabel.setVisible (false);
     addAndMakeVisible (subOctaveLabel);
 
@@ -272,10 +277,10 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     // Inspector button
     addAndMakeVisible (inspectButton);
-    inspectButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff2a2a2a));
-    inspectButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff3a3a3a));
-    inspectButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff888888));
-    inspectButton.setColour (juce::TextButton::textColourOnId, juce::Colour (0xffffcc66));
+    inspectButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xffdddddd));
+    inspectButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffffdd00));
+    inspectButton.setColour (juce::TextButton::textColourOffId, juce::Colour (0xff666666));
+    inspectButton.setColour (juce::TextButton::textColourOnId, juce::Colour (0xff000000));
     inspectButton.onClick = [&] {
         if (!inspector)
         {
@@ -318,42 +323,56 @@ void PluginEditor::updatePresetDisplay()
 
 void PluginEditor::paint (juce::Graphics& g)
 {
-    // Pure dark background
-    g.fillAll (juce::Colour (0xff0a0a0a));
+    // Clean white background for logo contrast (street art aesthetic)
+    auto bounds = getLocalBounds();
 
-    // If advanced panel is showing, draw section labels and divider
+    // Base white background
+    g.fillAll (juce::Colour (0xffffffff));
+
+    // DECORATIVE BORDER - Comic book / Street art style
+    const float inset = 5.0f;
+    const float borderThickness = 4.0f;
+    const float dotRadius = 5.0f;  // Smaller dots
+
+    auto frameBounds = bounds.toFloat().reduced (inset);
+
+    // Draw thick black border frame
+    g.setColour (juce::Colours::black);
+    g.drawRect (frameBounds, borderThickness);
+
+    // Yellow dots - ONLY AT 4 CORNERS
+    juce::Colour dotColor (0xffffdd00);  // Bright yellow
+
+    // Top-left
+    g.setColour (juce::Colours::black);
+    g.fillEllipse (frameBounds.getX() - dotRadius, frameBounds.getY() - dotRadius, dotRadius * 2, dotRadius * 2);
+    g.setColour (dotColor);
+    g.fillEllipse (frameBounds.getX() - dotRadius + 1.5f, frameBounds.getY() - dotRadius + 1.5f, (dotRadius - 1.5f) * 2, (dotRadius - 1.5f) * 2);
+
+    // Top-right
+    g.setColour (juce::Colours::black);
+    g.fillEllipse (frameBounds.getRight() - dotRadius, frameBounds.getY() - dotRadius, dotRadius * 2, dotRadius * 2);
+    g.setColour (dotColor);
+    g.fillEllipse (frameBounds.getRight() - dotRadius + 1.5f, frameBounds.getY() - dotRadius + 1.5f, (dotRadius - 1.5f) * 2, (dotRadius - 1.5f) * 2);
+
+    // Bottom-left
+    g.setColour (juce::Colours::black);
+    g.fillEllipse (frameBounds.getX() - dotRadius, frameBounds.getBottom() - dotRadius, dotRadius * 2, dotRadius * 2);
+    g.setColour (dotColor);
+    g.fillEllipse (frameBounds.getX() - dotRadius + 1.5f, frameBounds.getBottom() - dotRadius + 1.5f, (dotRadius - 1.5f) * 2, (dotRadius - 1.5f) * 2);
+
+    // Bottom-right
+    g.setColour (juce::Colours::black);
+    g.fillEllipse (frameBounds.getRight() - dotRadius, frameBounds.getBottom() - dotRadius, dotRadius * 2, dotRadius * 2);
+    g.setColour (dotColor);
+    g.fillEllipse (frameBounds.getRight() - dotRadius + 1.5f, frameBounds.getBottom() - dotRadius + 1.5f, (dotRadius - 1.5f) * 2, (dotRadius - 1.5f) * 2);
+
+    // If advanced panel is showing, draw divider
     if (showAdvancedPanel)
     {
         // Dividing line
-        g.setColour (juce::Colour (0xff444444).withAlpha (0.5f));
-        g.drawLine (0.0f, 220.0f, static_cast<float>(getWidth()), 220.0f, 1.0f);
-
-        // Section labels
-        g.setColour (juce::Colour (0xffffcc66).withAlpha (0.8f));
-        g.setFont (juce::Font (11.0f, juce::Font::bold));
-
-        // Calculate positions to match centered layout
-        const int secondaryKnobSize = 70;
-        const int secondarySpacing = 12;
-        const int sectionSpacing = 35;
-
-        // Top row - Filter Env and Amp Env
-        int row1TotalWidth = (secondaryKnobSize * 9) + (secondarySpacing * 8) + sectionSpacing;
-        int row1StartX = (getWidth() - row1TotalWidth) / 2;
-        int ampEnvX = row1StartX + (secondaryKnobSize + secondarySpacing) * 5 + sectionSpacing;
-
-        g.drawText ("FILTER ENV", row1StartX - 5, 225, 200, 15, juce::Justification::left);
-        g.drawText ("AMP ENV", ampEnvX - 5, 225, 200, 15, juce::Justification::left);
-
-        // Bottom row - LFO, Velocity, Misc
-        int row2TotalWidth = (secondaryKnobSize * 7) + (secondarySpacing * 6) + (sectionSpacing * 2);
-        int row2StartX = (getWidth() - row2TotalWidth) / 2;
-        int velX = row2StartX + (secondaryKnobSize + secondarySpacing) * 2 + sectionSpacing;
-        int miscX = velX + (secondaryKnobSize + secondarySpacing) * 2 + sectionSpacing;
-
-        g.drawText ("LFO", row2StartX - 5, 330, 100, 15, juce::Justification::left);
-        g.drawText ("VELOCITY", velX - 5, 330, 100, 15, juce::Justification::left);
-        g.drawText ("MISC", miscX - 5, 330, 100, 15, juce::Justification::left);
+        g.setColour (juce::Colour (0xff333333));
+        g.drawLine (0.0f, 220.0f, static_cast<float>(getWidth()), 220.0f, 2.0f);
     }
 }
 
@@ -368,80 +387,82 @@ void PluginEditor::resized()
     auto mainRow = bounds.removeFromTop (220);
     int currentX = margin;
 
-    // THICC Logo (left)
-    thiccLogo.setBounds (currentX, margin, 140, 140);
-    currentX += 140 + margin * 2;
+    // THICC Logo (left) - now wider for custom logo
+    thiccLogo.setBounds (currentX, margin, 200, 140);
+    currentX += 200 + margin * 2;
 
     // 6 Primary Knobs in a row
     const int knobSpacing = 8;
+    const int textBoxHeight = 20;  // Height for value display below knob
 
-    // Filter Cutoff
-    auto cutoffArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    filterCutoffLabel.setBounds (cutoffArea.removeFromBottom (primaryLabelHeight));
+    // Filter Cutoff - label above, knob + value below
+    auto cutoffArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    filterCutoffLabel.setBounds (cutoffArea.removeFromTop (primaryLabelHeight));
     filterCutoffSlider.setBounds (cutoffArea);
     currentX += primaryKnobSize + knobSpacing;
 
     // Filter Resonance
-    auto resArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    filterResonanceLabel.setBounds (resArea.removeFromBottom (primaryLabelHeight));
+    auto resArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    filterResonanceLabel.setBounds (resArea.removeFromTop (primaryLabelHeight));
     filterResonanceSlider.setBounds (resArea);
     currentX += primaryKnobSize + knobSpacing;
 
     // Drive
-    auto driveArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    driveLabel.setBounds (driveArea.removeFromBottom (primaryLabelHeight));
+    auto driveArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    driveLabel.setBounds (driveArea.removeFromTop (primaryLabelHeight));
     driveSlider.setBounds (driveArea);
     currentX += primaryKnobSize + knobSpacing;
 
     // Sub Mix
-    auto subArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    subMixLabel.setBounds (subArea.removeFromBottom (primaryLabelHeight));
+    auto subArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    subMixLabel.setBounds (subArea.removeFromTop (primaryLabelHeight));
     subMixSlider.setBounds (subArea);
     currentX += primaryKnobSize + knobSpacing;
 
     // THICC (Unison Detune)
-    auto thiccArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    thiccLabel.setBounds (thiccArea.removeFromBottom (primaryLabelHeight));
+    auto thiccArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    thiccLabel.setBounds (thiccArea.removeFromTop (primaryLabelHeight));
     thiccSlider.setBounds (thiccArea);
     currentX += primaryKnobSize + knobSpacing;
 
     // Glide
-    auto glideArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + primaryLabelHeight);
-    glideLabel.setBounds (glideArea.removeFromBottom (primaryLabelHeight));
+    auto glideArea = juce::Rectangle<int> (currentX, 20, primaryKnobSize, primaryKnobSize + textBoxHeight + primaryLabelHeight);
+    glideLabel.setBounds (glideArea.removeFromTop (primaryLabelHeight));
     glideSlider.setBounds (glideArea);
     currentX += primaryKnobSize + margin * 2;
 
-    // Output Meter (right side)
-    outputMeter.setBounds (currentX, margin, 120, 140);
-    currentX += 120 + margin;
+    // Output Meter - same size as other knobs (100px)
+    const int meterX = currentX;
+    outputMeter.setBounds (meterX, 20, primaryKnobSize, primaryKnobSize);
 
-    // Advanced button (below meter on right)
-    advancedButton.setBounds (getWidth() - 120, 120, 100, 30);
+    // Waveform visualizer - directly to the right of output meter
+    waveformVisualizer.setBounds (meterX + primaryKnobSize + knobSpacing, 20, primaryKnobSize + 20, primaryKnobSize);
 
-    // Waveform visualizer (centered, below knobs)
-    const int visualizerWidth = 420;
-    const int visualizerX = (getWidth() - visualizerWidth) / 2;
-    waveformVisualizer.setBounds (visualizerX, 135, visualizerWidth, 50);
+    // Advanced button (below output meter/waveform on right)
+    advancedButton.setBounds (meterX, 20 + primaryKnobSize + 10, 100, 30);
 
-    // Preset browser (centered, below visualizer)
+    // Preset browser (centered, positioned away from bottom edge)
     const int presetBrowserWidth = 300;
     const int presetBrowserX = (getWidth() - presetBrowserWidth) / 2;
-    const int presetBrowserY = 190;  // Moved down to accommodate visualizer
+    const int presetBrowserY = 165;  // Moved up to avoid bottom edge overlap
+    const int buttonHeight = 30;     // Taller buttons for better visibility
 
-    prevPresetButton.setBounds (presetBrowserX, presetBrowserY, 40, 25);
-    presetNameLabel.setBounds (presetBrowserX + 45, presetBrowserY - 2, presetBrowserWidth - 90, 30);
-    nextPresetButton.setBounds (presetBrowserX + presetBrowserWidth - 40, presetBrowserY, 40, 25);
+    prevPresetButton.setBounds (presetBrowserX, presetBrowserY, 50, buttonHeight);
+    presetNameLabel.setBounds (presetBrowserX + 55, presetBrowserY, presetBrowserWidth - 110, buttonHeight);
+    nextPresetButton.setBounds (presetBrowserX + presetBrowserWidth - 50, presetBrowserY, 50, buttonHeight);
 
     // === ADVANCED PANEL (if showing) ===
     if (showAdvancedPanel)
     {
-        auto advancedArea = bounds;
+        // Advanced panel starts AFTER the main row (at Y=220)
         const int secondaryKnobSize = 70;
         const int secondaryLabelHeight = 20;
+        const int secondaryTextBoxHeight = 18;  // Height for value display
         const int secondarySpacing = 12;
         const int sectionSpacing = 35;
 
-        int panelY = 25;  // Space for section label
+        // Start positioning from the top of the advanced panel area
+        int panelY = 220 + 25;  // Main row height (220) + space for section label (25)
 
         // Calculate total width to center the layout
         // Row 1: Filter Env (5 knobs) + Amp Env (4 knobs) = 9 knobs total
@@ -452,47 +473,47 @@ void PluginEditor::resized()
         int filterEnvX = row1StartX;
         int filterEnvY = panelY;
 
-        auto fAttackArea = juce::Rectangle<int> (filterEnvX, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterEnvAttackLabel.setBounds (fAttackArea.removeFromBottom (secondaryLabelHeight));
+        auto fAttackArea = juce::Rectangle<int> (filterEnvX, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterEnvAttackLabel.setBounds (fAttackArea.removeFromTop (secondaryLabelHeight));
         filterEnvAttackSlider.setBounds (fAttackArea);
 
-        auto fDecayArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing), filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterEnvDecayLabel.setBounds (fDecayArea.removeFromBottom (secondaryLabelHeight));
+        auto fDecayArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing), filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterEnvDecayLabel.setBounds (fDecayArea.removeFromTop (secondaryLabelHeight));
         filterEnvDecaySlider.setBounds (fDecayArea);
 
-        auto fSustainArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 2, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterEnvSustainLabel.setBounds (fSustainArea.removeFromBottom (secondaryLabelHeight));
+        auto fSustainArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 2, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterEnvSustainLabel.setBounds (fSustainArea.removeFromTop (secondaryLabelHeight));
         filterEnvSustainSlider.setBounds (fSustainArea);
 
-        auto fReleaseArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 3, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterEnvReleaseLabel.setBounds (fReleaseArea.removeFromBottom (secondaryLabelHeight));
+        auto fReleaseArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 3, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterEnvReleaseLabel.setBounds (fReleaseArea.removeFromTop (secondaryLabelHeight));
         filterEnvReleaseSlider.setBounds (fReleaseArea);
 
-        auto fAmountArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 4, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterEnvAmountLabel.setBounds (fAmountArea.removeFromBottom (secondaryLabelHeight));
+        auto fAmountArea = juce::Rectangle<int> (filterEnvX + (secondaryKnobSize + secondarySpacing) * 4, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterEnvAmountLabel.setBounds (fAmountArea.removeFromTop (secondaryLabelHeight));
         filterEnvAmountSlider.setBounds (fAmountArea);
 
         // AMP ENVELOPE Section
         int ampEnvX = filterEnvX + (secondaryKnobSize + secondarySpacing) * 5 + sectionSpacing;
 
-        auto aAttackArea = juce::Rectangle<int> (ampEnvX, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        ampAttackLabel.setBounds (aAttackArea.removeFromBottom (secondaryLabelHeight));
+        auto aAttackArea = juce::Rectangle<int> (ampEnvX, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        ampAttackLabel.setBounds (aAttackArea.removeFromTop (secondaryLabelHeight));
         ampAttackSlider.setBounds (aAttackArea);
 
-        auto aDecayArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing), filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        ampDecayLabel.setBounds (aDecayArea.removeFromBottom (secondaryLabelHeight));
+        auto aDecayArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing), filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        ampDecayLabel.setBounds (aDecayArea.removeFromTop (secondaryLabelHeight));
         ampDecaySlider.setBounds (aDecayArea);
 
-        auto aSustainArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing) * 2, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        ampSustainLabel.setBounds (aSustainArea.removeFromBottom (secondaryLabelHeight));
+        auto aSustainArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing) * 2, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        ampSustainLabel.setBounds (aSustainArea.removeFromTop (secondaryLabelHeight));
         ampSustainSlider.setBounds (aSustainArea);
 
-        auto aReleaseArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing) * 3, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        ampReleaseLabel.setBounds (aReleaseArea.removeFromBottom (secondaryLabelHeight));
+        auto aReleaseArea = juce::Rectangle<int> (ampEnvX + (secondaryKnobSize + secondarySpacing) * 3, filterEnvY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        ampReleaseLabel.setBounds (aReleaseArea.removeFromTop (secondaryLabelHeight));
         ampReleaseSlider.setBounds (aReleaseArea);
 
         // BOTTOM ROW: LFO | VELOCITY | MISC
-        panelY += secondaryKnobSize + secondaryLabelHeight + 20;
+        panelY += secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight + 20;
 
         // Calculate total width for Row 2 to center it
         // LFO (2) + Velocity (2) + Misc (3) = 7 knobs total
@@ -501,34 +522,34 @@ void PluginEditor::resized()
 
         // LFO Section
         int lfoX = row2StartX;
-        auto lfoRateArea = juce::Rectangle<int> (lfoX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        lfoRateLabel.setBounds (lfoRateArea.removeFromBottom (secondaryLabelHeight));
+        auto lfoRateArea = juce::Rectangle<int> (lfoX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        lfoRateLabel.setBounds (lfoRateArea.removeFromTop (secondaryLabelHeight));
         lfoRateSlider.setBounds (lfoRateArea);
 
-        auto lfoAmtArea = juce::Rectangle<int> (lfoX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        lfoAmountLabel.setBounds (lfoAmtArea.removeFromBottom (secondaryLabelHeight));
+        auto lfoAmtArea = juce::Rectangle<int> (lfoX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        lfoAmountLabel.setBounds (lfoAmtArea.removeFromTop (secondaryLabelHeight));
         lfoAmountSlider.setBounds (lfoAmtArea);
 
         // Velocity Section
         int velX = lfoX + (secondaryKnobSize + secondarySpacing) * 2 + sectionSpacing;
 
-        auto velFiltArea = juce::Rectangle<int> (velX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        velToFilterLabel.setBounds (velFiltArea.removeFromBottom (secondaryLabelHeight));
+        auto velFiltArea = juce::Rectangle<int> (velX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        velToFilterLabel.setBounds (velFiltArea.removeFromTop (secondaryLabelHeight));
         velToFilterSlider.setBounds (velFiltArea);
 
-        auto velAmpArea = juce::Rectangle<int> (velX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        velToAmpLabel.setBounds (velAmpArea.removeFromBottom (secondaryLabelHeight));
+        auto velAmpArea = juce::Rectangle<int> (velX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        velToAmpLabel.setBounds (velAmpArea.removeFromTop (secondaryLabelHeight));
         velToAmpSlider.setBounds (velAmpArea);
 
         // Misc Section
         int miscX = velX + (secondaryKnobSize + secondarySpacing) * 2 + sectionSpacing;
 
-        auto keyTrackArea = juce::Rectangle<int> (miscX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        filterKeyTrackLabel.setBounds (keyTrackArea.removeFromBottom (secondaryLabelHeight));
+        auto keyTrackArea = juce::Rectangle<int> (miscX, panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        filterKeyTrackLabel.setBounds (keyTrackArea.removeFromTop (secondaryLabelHeight));
         filterKeyTrackSlider.setBounds (keyTrackArea);
 
-        auto voicesArea = juce::Rectangle<int> (miscX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryLabelHeight);
-        unisonVoicesLabel.setBounds (voicesArea.removeFromBottom (secondaryLabelHeight));
+        auto voicesArea = juce::Rectangle<int> (miscX + (secondaryKnobSize + secondarySpacing), panelY, secondaryKnobSize, secondaryKnobSize + secondaryTextBoxHeight + secondaryLabelHeight);
+        unisonVoicesLabel.setBounds (voicesArea.removeFromTop (secondaryLabelHeight));
         unisonVoicesSlider.setBounds (voicesArea);
 
         // Sub Octave ComboBox
@@ -595,7 +616,7 @@ void PluginEditor::toggleAdvancedPanel()
 
     // Resize window
     if (showAdvancedPanel)
-        setSize (1200, 410);  // Main (220) + Advanced panel (190)
+        setSize (1200, 500);  // Main (220) + Advanced panel (280) - more space for knobs
     else
         setSize (1200, 220);  // Main controls with visualizer
 
