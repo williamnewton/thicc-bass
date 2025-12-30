@@ -40,7 +40,7 @@ Thicc Bass is a focused bass synthesizer designed to deliver powerful, punchy lo
 - Colorful output meter
 
 ### Instant Results
-- **4 Factory Presets**: Phat Mono Bass, Sub Drop, Wobble Beast, Retro Synth Bass
+- **5 Factory Presets**: Deep Sub, Reese Bass, Acid Bass, Wobble Bass, Thicc Saw
 - **6 Main Controls**: Cutoff, Resonance, Drive, Sub Mix, THICC, Glide
 - **Advanced Panel**: 16 additional parameters for deep control
 
@@ -369,11 +369,9 @@ All controls feature custom-designed rotary knobs with:
 ✅ Audio Unit validation passed
 
 ### Optional Future Enhancements
-- Output level meter with peak hold
-- Preset system (save/load to disk)
-- Factory preset library
-- Preset browser UI
 - Parameter tooltips
+- Additional factory presets
+- User preset save/load to disk
 
 ## Architecture
 
@@ -445,7 +443,7 @@ See LICENSE file for details.
 - ✨ Street art/graffiti UI design
 - 🎨 Vibrant red/orange/pink color scheme
 - 🎛️ 6 primary controls + advanced panel with 16 additional parameters
-- 🎵 4 factory presets included
+- 🎵 5 factory presets included
 - 📊 Real-time output meter and waveform visualizer
 - 🎹 Full MIDI support with velocity sensitivity
 - 🔊 Professional bass synthesis with sub oscillator, filter, and drive

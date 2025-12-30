@@ -66,7 +66,7 @@
 
 ## 🎵 First Sound in 30 Seconds
 
-1. Load preset: **"Phat Mono Bass"**
+1. Load preset: **"Deep Sub"**
 2. Play a low note (C1 or C2)
 3. Turn up **SUB MIX** to 60%
 4. Enjoy that THICC bass! 🔊

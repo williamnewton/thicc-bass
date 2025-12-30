@@ -85,10 +85,10 @@ Version 1.0 | Street Art Edition
 
 ### Using Presets
 
-Thicc Bass comes with 4 built-in presets:
+Thicc Bass comes with 5 built-in presets:
 
 - **◄ ►** Use the arrow buttons to browse presets
-- Try: "Phat Mono Bass", "Sub Drop", "Wobble Beast", "Retro Synth Bass"
+- Try: "Deep Sub", "Reese Bass", "Acid Bass", "Wobble Bass", "Thicc Saw"
 
 ---
 
@@ -160,14 +160,14 @@ Controls how hard you play affects brightness and volume
 ## 🎵 Making Your First Bass Sound
 
 ### Classic Sub Bass
-1. Load preset: **"Phat Mono Bass"**
+1. Load preset: **"Deep Sub"**
 2. Turn **SUB MIX** to 60%
 3. Turn **CUTOFF** to around 400Hz
 4. Turn **RESONANCE** to 30%
 5. Add **DRIVE** to taste (30-40%)
 
 ### Wobble Bass
-1. Load preset: **"Wobble Beast"**
+1. Load preset: **"Wobble Bass"**
 2. Click **ADVANCED**
 3. Adjust **LFO RATE** for wobble speed
 4. Adjust **LFO AMOUNT** for wobble depth
@@ -266,7 +266,7 @@ Thicc Bass features a vibrant **street art / graffiti** aesthetic with:
 - **Sample Rate**: Up to 192 kHz
 - **Buffer Sizes**: 64 - 4096 samples
 - **CPU Usage**: Very efficient
-- **Preset Count**: 4 factory presets
+- **Preset Count**: 5 factory presets
 - **Total Parameters**: 22
 
 ---
