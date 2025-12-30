@@ -133,12 +133,144 @@ auval -v aumu Tbs1 Thic
 # Result: AU VALIDATION SUCCEEDED
 ```
 
+## Installation (For Users)
+
+### macOS Installation
+
+#### Step 1: Choose Your Plugin Format
+
+Different DAWs support different plugin formats. Choose the one that works with your DAW:
+
+| DAW | Recommended Format | Alternative |
+|-----|-------------------|-------------|
+| Logic Pro | AU (.component) | VST3 |
+| GarageBand | AU (.component) | - |
+| FL Studio | VST3 (.vst3) | - |
+| Ableton Live | AU (.component) | VST3 |
+| Cubase | VST3 (.vst3) | - |
+| Studio One | VST3 (.vst3) | AU |
+| Reaper | VST3 (.vst3) | AU, CLAP |
+| Bitwig Studio | CLAP (.clap) | VST3 |
+| Pro Tools | AU (.component) | - |
+
+#### Step 2: Copy Plugin to the Correct Location
+
+**For AU (Audio Units):**
+```bash
+# Copy to Components folder
+cp -R "Thicc Bass.component" ~/Library/Audio/Plug-Ins/Components/
+```
+
+**For VST3:**
+```bash
+# Copy to VST3 folder
+cp -R "Thicc Bass.vst3" ~/Library/Audio/Plug-Ins/VST3/
+```
+
+**For CLAP:**
+```bash
+# Copy to CLAP folder
+cp -R "Thicc Bass.clap" ~/Library/Audio/Plug-Ins/CLAP/
+```
+
+**Accessing ~/Library folder in Finder:**
+1. Open Finder
+2. Press `Cmd + Shift + G`
+3. Type: `~/Library/Audio/Plug-Ins/`
+4. Press Enter
+
+#### Step 3: macOS Security (Gatekeeper)
+
+Since this is an unsigned plugin, macOS may block it:
+
+1. Try to load the plugin in your DAW
+2. If blocked, go to **System Settings > Privacy & Security**
+3. Look for a message about "Thicc Bass" being blocked
+4. Click **"Allow Anyway"**
+5. Restart your DAW
+
+### Windows Installation
+
+**For VST3:**
+```
+Copy "Thicc Bass.vst3" to:
+C:\Program Files\Common Files\VST3\
+```
+
+Restart your DAW after installation.
+
+### DAW-Specific Instructions
+
+#### FL Studio (Windows/macOS)
+1. Install the VST3 version to the location above
+2. Open FL Studio
+3. Go to **Options > Manage Plugins**
+4. Click **Find Plugins** or **Start Scan**
+5. Thicc Bass should appear in your plugin list
+6. Find it under **Generators** or **Instruments**
+
+#### Logic Pro (macOS)
+1. Install the AU version (.component)
+2. Restart Logic Pro
+3. Create a new Software Instrument track
+4. Click the instrument slot
+5. Go to **AU Instruments > Thic (Manufacturer) > Thicc Bass**
+
+#### Ableton Live (macOS/Windows)
+1. Install AU (macOS) or VST3 (Windows/macOS)
+2. Restart Ableton Live
+3. Ableton will automatically scan the plugin folders
+4. Find Thicc Bass in the **Instruments** browser
+
+#### Cubase/Nuendo (Windows/macOS)
+1. Install VST3 version
+2. Open Cubase
+3. Go to **Studio > VST Plug-in Manager**
+4. Click **Update Plug-in Information**
+5. Thicc Bass will appear under **Instruments**
+
+#### Reaper (Windows/macOS)
+1. Install VST3, AU, or CLAP version
+2. Open Reaper
+3. Go to **Options > Preferences > Plugins > VST**
+4. Add the plugin folder path if needed
+5. Click **Re-scan**
+6. Insert as instrument on a track: **Insert > Virtual Instrument**
+
+#### Bitwig Studio (Windows/macOS)
+1. Install CLAP or VST3 version
+2. Restart Bitwig
+3. Bitwig automatically scans plugin folders
+4. Find Thicc Bass in the **Devices** browser
+
+### Troubleshooting
+
+**Plugin doesn't appear in DAW:**
+- Restart your DAW after installation
+- Manually rescan plugins in DAW preferences
+- Check you installed to the correct folder
+- On macOS, check System Settings for security blocks
+
+**Plugin loads but shows security warning (macOS):**
+- This is normal for unsigned plugins
+- Follow the Gatekeeper instructions above
+
+**Plugin crashes or doesn't load:**
+- Make sure you're using the correct format for your DAW
+- Check that your DAW is up to date
+- Try both AU and VST3 versions (on macOS)
+
+**No sound output:**
+- Check MIDI is being sent to the plugin
+- Check plugin output is routed correctly in your DAW
+- Try adjusting the CUTOFF and SUB MIX controls
+
 ## Plugin Formats
 
-- **Audio Unit (AU)** - Primary target for Logic Pro
-- **VST3** - Cross-platform DAW support
+- **Audio Unit (AU)** - macOS only (Logic Pro, GarageBand, Ableton Live, etc.)
+- **VST3** - Cross-platform (FL Studio, Ableton Live, Cubase, Reaper, etc.)
 - **Standalone** - Standalone application
-- **CLAP** - Modern plugin format
+- **CLAP** - Modern plugin format (Bitwig Studio, Reaper)
 
 ## Plugin Codes
 
@@ -240,6 +372,15 @@ See LICENSE file for details.
 
 ---
 
-**Current Version**: 0.0.1
-**Last Updated**: December 29, 2025
-**Status**: Phase 3 Complete - Production Ready
+**Current Version**: 1.0-beta
+**Last Updated**: December 29, 2024
+**Status**: Beta Testing - Ready for Distribution
+
+### What's New in v1.0-beta
+- ✨ Street art/graffiti UI design
+- 🎨 Vibrant red/orange/pink color scheme
+- 🎛️ 6 primary controls + advanced panel with 16 additional parameters
+- 🎵 4 factory presets included
+- 📊 Real-time output meter and waveform visualizer
+- 🎹 Full MIDI support with velocity sensitivity
+- 🔊 Professional bass synthesis with sub oscillator, filter, and drive
