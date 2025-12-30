@@ -19,10 +19,11 @@
 
 ## 🎵 PRESETS (Use ◄ ► Buttons)
 
-1. **Phat Mono Bass** - Classic focused bass
-2. **Sub Drop** - Massive sub-heavy sound
-3. **Wobble Beast** - LFO wobble bass
-4. **Retro Synth Bass** - Vintage synth sound
+1. **Deep Sub** - 808-style pure sub bass
+2. **Reese Bass** - Wide, detuned movement
+3. **Acid Bass** - Resonant filter sweep classic
+4. **Wobble Bass** - Fast LFO dubstep wobble
+5. **Thicc Saw** - Maximum wide saw (signature sound!)
 
 ---
 
@@ -69,7 +70,7 @@ THICC: 0% (mono)
 
 ### Wobble Bass
 ```
-Preset: "Wobble Beast"
+Preset: "Wobble Bass"
 Advanced > LFO RATE: 2-8 Hz
 Advanced > LFO AMOUNT: 60-80%
 Tweak CUTOFF + RESONANCE
@@ -85,7 +86,7 @@ DRIVE: 30%
 
 ### Deep Sub Drop
 ```
-Preset: "Sub Drop"
+Preset: "Deep Sub"
 SUB MIX: 80-100%
 CUTOFF: 200-400Hz
 GLIDE: 500-1000ms
