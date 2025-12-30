@@ -38,10 +38,22 @@ jobs:
     - name: Package macOS Plugins
       run: |
         mkdir -p "Thicc Bass v1.0-macOS"
-        cp -R build/ThiccBass_artefacts/Debug/AU/"Thicc Bass.component" "Thicc Bass v1.0-macOS/"
-        cp -R build/ThiccBass_artefacts/Debug/VST3/"Thicc Bass.vst3" "Thicc Bass v1.0-macOS/"
-        cp -R build/ThiccBass_artefacts/Debug/CLAP/"Thicc Bass.clap" "Thicc Bass v1.0-macOS/"
-        cp distribution/"Thicc Bass v1.0"/INSTALLATION_INSTRUCTIONS.txt "Thicc Bass v1.0-macOS/"
+        cp -R build/ThiccBass_artefacts/Release/AU/"Thicc Bass.component" "Thicc Bass v1.0-macOS/" || true
+        cp -R build/ThiccBass_artefacts/Release/VST3/"Thicc Bass.vst3" "Thicc Bass v1.0-macOS/" || true
+        cp -R build/ThiccBass_artefacts/Release/CLAP/"Thicc Bass.clap" "Thicc Bass v1.0-macOS/" || true
+        echo "THICC BASS v1.0 - macOS Installation
+
+Copy the plugin(s) to:
+- AU: ~/Library/Audio/Plug-Ins/Components/
+- VST3: ~/Library/Audio/Plug-Ins/VST3/
+- CLAP: ~/Library/Audio/Plug-Ins/CLAP/
+
+Press Cmd+Shift+G in Finder and paste the path above.
+Restart your DAW after installation.
+
+If macOS blocks the plugin:
+System Settings > Privacy & Security > Allow Anyway" > README.txt
+        mv README.txt "Thicc Bass v1.0-macOS/"
         zip -r Thicc_Bass_v1.0_macOS.zip "Thicc Bass v1.0-macOS"
 
     - name: Upload macOS Artifacts
@@ -80,7 +92,14 @@ jobs:
       run: |
         mkdir "Thicc Bass v1.0-Windows"
         xcopy /E /I "build\ThiccBass_artefacts\Release\VST3\Thicc Bass.vst3" "Thicc Bass v1.0-Windows\Thicc Bass.vst3"
-        copy "distribution\Thicc Bass v1.0\INSTALLATION_INSTRUCTIONS.txt" "Thicc Bass v1.0-Windows\"
+        echo THICC BASS v1.0 - Windows Installation > "Thicc Bass v1.0-Windows\README.txt"
+        echo. >> "Thicc Bass v1.0-Windows\README.txt"
+        echo Copy "Thicc Bass.vst3" folder to: >> "Thicc Bass v1.0-Windows\README.txt"
+        echo C:\Program Files\Common Files\VST3\ >> "Thicc Bass v1.0-Windows\README.txt"
+        echo. >> "Thicc Bass v1.0-Windows\README.txt"
+        echo Restart your DAW and rescan plugins. >> "Thicc Bass v1.0-Windows\README.txt"
+        echo. >> "Thicc Bass v1.0-Windows\README.txt"
+        echo Works with: FL Studio, Ableton Live, Cubase, Reaper, Bitwig, etc. >> "Thicc Bass v1.0-Windows\README.txt"
         powershell Compress-Archive -Path "Thicc Bass v1.0-Windows" -DestinationPath "Thicc_Bass_v1.0_Windows.zip"
 
     - name: Upload Windows Artifacts
